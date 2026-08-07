@@ -17,15 +17,15 @@
     "report": "ts-node --transpile-only scripts/skillgate-report.ts"
   },
   "dependencies": {
-    "@hazeljs/agent": "file:../hazeljs/packages/agent",
-    "@hazeljs/core": "file:../hazeljs/packages/core",
-    "@hazeljs/eval": "file:../hazeljs/packages/eval",
-    "@hazeljs/inspector": "file:../hazeljs/packages/inspector",
-    "@hazeljs/mcp": "file:../hazeljs/packages/mcp",
-    "@hazeljs/skillgate": "file:../hazeljs/packages/skillgate",
-    "@hazeljs/swagger": "file:../hazeljs/packages/swagger",
-    "@hazeljs/testing": "file:../hazeljs/packages/testing",
-    "openai": "^4.77.0",
+    "@hazeljs/agent": "2.0.1",
+    "@hazeljs/core": "2.0.1",
+    "@hazeljs/eval": "2.0.1",
+    "@hazeljs/inspector": "2.0.1",
+    "@hazeljs/mcp": "2.0.1",
+    "@hazeljs/skillgate": "2.0.1",
+    "@hazeljs/swagger": "2.0.1",
+    "@hazeljs/testing": "2.0.1",
+    "openai": "^6.0.0",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
