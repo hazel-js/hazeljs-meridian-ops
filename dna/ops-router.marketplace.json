@@ -1,0 +1,32 @@
+{
+  "name": "@meridian/router-agent",
+  "version": "1.0.0",
+  "description": "Intent router — delegates to support-desk, fraud-triage, or api-concierge.",
+  "dna": {
+    "format": "hazeljs.agent.dna",
+    "version": "1.0.0",
+    "name": "ops-router",
+    "description": "Intent router — delegates to support-desk, fraud-triage, or api-concierge.",
+    "systemPrompt": "You are the Meridian Ops router. Pick exactly one specialist: support-desk, fraud-triage, or api-concierge.",
+    "tools": [
+      {
+        "name": "support-desk",
+        "description": "Delegate to support"
+      },
+      {
+        "name": "fraud-triage",
+        "description": "Delegate to fraud"
+      },
+      {
+        "name": "api-concierge",
+        "description": "Delegate to concierge"
+      }
+    ],
+    "exportedAt": "2026-08-07T12:00:00.000Z"
+  },
+  "readme": "@meridian/router-agent for Meridian Ops",
+  "keywords": [
+    "router",
+    "multi-agent"
+  ]
+}

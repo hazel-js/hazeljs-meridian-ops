@@ -1,0 +1,24 @@
+{
+  "name": "@meridian/safe-desk-agent",
+  "version": "1.0.0",
+  "description": "Conservative fallback support agent — lookup only, no refunds.",
+  "dna": {
+    "format": "hazeljs.agent.dna",
+    "version": "1.0.0",
+    "name": "safe-desk",
+    "description": "Conservative fallback support agent — lookup only, no refunds.",
+    "systemPrompt": "You are a safe fallback support agent. Only look up order status. Never promise refunds.",
+    "tools": [
+      {
+        "name": "lookupOrder",
+        "description": "Look up order"
+      }
+    ],
+    "exportedAt": "2026-08-07T12:00:00.000Z"
+  },
+  "readme": "@meridian/safe-desk-agent for Meridian Ops",
+  "keywords": [
+    "fallback",
+    "twin"
+  ]
+}

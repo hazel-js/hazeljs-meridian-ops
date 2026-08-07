@@ -1,0 +1,42 @@
+{
+  "name": "hazeljs-meridian-ops",
+  "version": "1.0.0",
+  "description": "Meridian Ops Platform — HazelJS Agent OS flagship (DNA, Store, Skillgate, HITL, multi-agent, local control plane)",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/main.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "test": "jest --runInBand",
+    "store:sync": "ts-node --transpile-only scripts/store-sync.ts",
+    "platform:sync": "ts-node --transpile-only scripts/platform-sync.ts",
+    "tour": "ts-node --transpile-only scripts/tour.ts",
+    "demo:smoke-cli": "ts-node --transpile-only scripts/demo-smoke-cli.ts",
+    "demo:scenarios": "ts-node --transpile-only scripts/demo-scenarios.ts",
+    "mcp": "ts-node --transpile-only src/mcp/main.ts",
+    "report": "ts-node --transpile-only scripts/skillgate-report.ts"
+  },
+  "dependencies": {
+    "@hazeljs/agent": "file:../hazeljs/packages/agent",
+    "@hazeljs/core": "file:../hazeljs/packages/core",
+    "@hazeljs/eval": "file:../hazeljs/packages/eval",
+    "@hazeljs/inspector": "file:../hazeljs/packages/inspector",
+    "@hazeljs/mcp": "file:../hazeljs/packages/mcp",
+    "@hazeljs/skillgate": "file:../hazeljs/packages/skillgate",
+    "@hazeljs/swagger": "file:../hazeljs/packages/swagger",
+    "@hazeljs/testing": "file:../hazeljs/packages/testing",
+    "openai": "^4.77.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.39",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  },
+  "author": "HazelJS",
+  "license": "Apache-2.0"
+}

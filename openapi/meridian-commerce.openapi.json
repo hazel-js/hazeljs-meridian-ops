@@ -1,0 +1,164 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Meridian Commerce Ops API",
+    "description": "Hand-written OpenAPI for Skillgate.fromOpenApi demos (Path A).",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://127.0.0.1:3050" }],
+  "paths": {
+    "/api/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "tags": ["agent"],
+        "summary": "List recent Meridian Commerce orders",
+        "x-hazel-skill": { "readOnly": true, "class": "read" }
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "operationId": "getOrder",
+        "tags": ["agent"],
+        "summary": "Fetch an order by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Order id like ORD-1001"
+          }
+        ],
+        "x-hazel-skill": { "readOnly": true, "class": "read" }
+      },
+      "delete": {
+        "operationId": "deleteOrder",
+        "tags": ["agent"],
+        "summary": "Permanently delete an order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "x-hazel-skill": { "class": "destructive", "requiresApproval": true }
+      }
+    },
+    "/api/orders/{id}/shipment": {
+      "get": {
+        "operationId": "getShipment",
+        "tags": ["agent"],
+        "summary": "Get shipment tracking details for an order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "x-hazel-skill": { "readOnly": true, "class": "read" }
+      }
+    },
+    "/api/orders/{id}/tickets": {
+      "post": {
+        "operationId": "createTicket",
+        "tags": ["agent"],
+        "summary": "Open a support ticket for an order",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["subject"],
+                "properties": {
+                  "subject": { "type": "string", "description": "Ticket subject" },
+                  "body": { "type": "string", "description": "Ticket body" }
+                }
+              }
+            }
+          }
+        },
+        "x-hazel-skill": { "requiresApproval": true, "class": "write" }
+      }
+    },
+    "/api/refunds": {
+      "get": {
+        "operationId": "listRefunds",
+        "tags": ["agent"],
+        "summary": "List refund requests",
+        "x-hazel-skill": { "readOnly": true, "class": "read" }
+      },
+      "post": {
+        "operationId": "createRefund",
+        "tags": ["agent"],
+        "summary": "Create a refund for an order",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["orderId", "amountUsd"],
+                "properties": {
+                  "orderId": { "type": "string" },
+                  "amountUsd": { "type": "number" },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "x-hazel-skill": { "requiresApproval": true, "class": "write" }
+      }
+    },
+    "/api/tickets": {
+      "get": {
+        "operationId": "listTickets",
+        "tags": ["agent"],
+        "summary": "List support tickets",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "x-hazel-skill": { "readOnly": true, "class": "read" }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "operationId": "listAdminUsers",
+        "tags": ["agent"],
+        "summary": "List internal admin users",
+        "x-hazel-skill": { "class": "admin" }
+      }
+    },
+    "/api/catalog": {
+      "get": {
+        "operationId": "listCatalog",
+        "tags": ["public"],
+        "summary": "Public product catalog — not opted into Skillgate"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "tags": ["agent"],
+        "summary": "Service health probe"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@meridian/fraud-triage-agent",
+  "version": "1.0.0",
+  "description": "Fraud triage — risk signals and HITL account freezes.",
+  "dna": {
+    "format": "hazeljs.agent.dna",
+    "version": "1.0.0",
+    "name": "fraud-triage",
+    "description": "Fraud triage — risk signals and HITL account freezes.",
+    "systemPrompt": "You are Meridian fraud triage. Always getRiskSignals before freezeAccount. Freeze only when risk is high.",
+    "tools": [
+      {
+        "name": "getRiskSignals",
+        "description": "Fetch risk signals"
+      },
+      {
+        "name": "freezeAccount",
+        "description": "Freeze account",
+        "requiresApproval": true
+      }
+    ],
+    "policies": [
+      {
+        "id": "freeze-needs-approval",
+        "tool": "freezeAccount",
+        "effect": "require_approval",
+        "priority": 20
+      }
+    ],
+    "exportedAt": "2026-08-07T12:00:00.000Z"
+  },
+  "readme": "@meridian/fraud-triage-agent for Meridian Ops",
+  "keywords": [
+    "fraud",
+    "hitl"
+  ]
+}
