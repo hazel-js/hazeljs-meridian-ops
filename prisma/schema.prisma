@@ -1,0 +1,82 @@
+// Meridian Ops — Agent OS durable process store (Phase 6 / AOS-014)
+// Opt-in: AGENT_OS_DURABLE_BACKEND=sql + npm run db:push
+// Default tour still uses file durable runs (no DB required).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AgentRun {
+  id             String    @id
+  agentName      String
+  agentVersion   String?
+  status         String
+  input          Json?
+  output         Json?
+  error          Json?
+  tenantId       String?
+  userId         String?
+  parentRunId    String?
+  rootRunId      String
+  attempt        Int       @default(1)
+  checkpointId   String?
+  leaseOwner     String?
+  leaseExpiresAt DateTime?
+  leaseToken     String?
+  createdAt      DateTime  @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  updatedAt      DateTime  @updatedAt
+  metadata       Json?
+
+  @@index([agentName])
+  @@index([status])
+  @@index([tenantId])
+  @@index([rootRunId])
+  @@index([updatedAt])
+  @@index([leaseExpiresAt])
+  @@map("agent_runs")
+}
+
+model AgentRunCheckpoint {
+  id        String   @id
+  runId     String
+  step      Int?
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([runId])
+  @@index([runId, createdAt])
+  @@map("agent_run_checkpoints")
+}
+
+model AgentHumanTask {
+  id         String    @id
+  runId      String
+  type       String
+  status     String
+  toolName   String?
+  payload    Json?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  metadata   Json?
+
+  @@index([runId])
+  @@index([status])
+  @@map("agent_human_tasks")
+}
+
+model AgentA2ATask {
+  id          String   @id
+  taskJson    Json?
+  executionId String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("agent_a2a_tasks")
+}

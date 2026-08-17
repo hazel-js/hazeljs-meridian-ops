@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220" role="img" aria-labelledby="title desc">
+  <title id="title">Meridian Ops tour flow</title>
+  <desc id="desc">Animated walkthrough: store sync, platform sync, chat execute, optional HITL approve</desc>
+  <defs>
+    <style>
+      .box { fill: #f4f7f5; stroke: #1f4d3a; stroke-width: 2; }
+      .label { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 13px; fill: #14231c; }
+      .sub { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; fill: #3d5a4c; }
+      .arrow { stroke: #1f4d3a; stroke-width: 2; fill: none; }
+      .pulse { opacity: 0.15; }
+      @keyframes march {
+        0% { stroke-dashoffset: 24; opacity: 0.35; }
+        50% { opacity: 1; }
+        100% { stroke-dashoffset: 0; opacity: 0.35; }
+      }
+      .march { stroke-dasharray: 6 6; animation: march 1.6s linear infinite; }
+      @keyframes glow {
+        0%, 100% { fill: #f4f7f5; }
+        50% { fill: #d7ebe0; }
+      }
+      .g1 { animation: glow 3.2s ease-in-out infinite; }
+      .g2 { animation: glow 3.2s ease-in-out 0.8s infinite; }
+      .g3 { animation: glow 3.2s ease-in-out 1.6s infinite; }
+      .g4 { animation: glow 3.2s ease-in-out 2.4s infinite; }
+    </style>
+  </defs>
+  <rect width="720" height="220" fill="#eef5f1"/>
+  <text x="24" y="28" class="label" font-weight="700">Meridian tour (H15 min)</text>
+
+  <rect class="box g1" x="24" y="56" width="140" height="72" rx="6"/>
+  <text x="40" y="88" class="label">1 · store:sync</text>
+  <text x="40" y="108" class="sub">DNA ’ lock</text>
+
+  <path class="arrow march" d="M172 92 H210"/>
+
+  <rect class="box g2" x="218" y="56" width="140" height="72" rx="6"/>
+  <text x="234" y="88" class="label">2 · platform:sync</text>
+  <text x="234" y="108" class="sub">desired state</text>
+
+  <path class="arrow march" d="M366 92 H404"/>
+
+  <rect class="box g3" x="412" y="56" width="140" height="72" rx="6"/>
+  <text x="428" y="88" class="label">3 · /api/*/chat</text>
+  <text x="428" y="108" class="sub">real tools</text>
+
+  <path class="arrow march" d="M560 92 H598"/>
+
+  <rect class="box g4" x="606" y="56" width="90" height="72" rx="6"/>
+  <text x="618" y="88" class="label">4 · HITL</text>
+  <text x="618" y="108" class="sub">approve</text>
+
+  <text x="24" y="170" class="sub">Not this: hazel agent run stubs · apply ` restart Node · K8s dry-run is appendix only</text>
+  <text x="24" y="192" class="sub">Phase 6 opt-in: SQL durable · RAG helpdesk · Flow peer · remote registry · k8s dry-run</text>
+</svg>

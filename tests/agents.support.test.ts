@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { describeAgent, runAgentSuite, assertAgentResult, expectTools } from '@hazeljs/testing';
 import { createStandaloneAgentOs } from '../src/agents/agents.module';
 

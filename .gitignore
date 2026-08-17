@@ -5,3 +5,5 @@ dist/
 logs/
 *.log
 coverage/
+prisma/*.db
+prisma/*.db-journal

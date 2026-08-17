@@ -60,6 +60,14 @@ export class ChatController {
     return chatResponse(await this.chat.chat({ ...body, agent: 'fraud-triage' }));
   }
 
+  @Post('helpdesk/chat')
+  async helpdeskChat(@Body() body: ChatRequest) {
+    if (!body?.message?.trim()) return { error: 'message is required' };
+    return chatResponse(
+      await this.chat.chat({ ...body, agent: 'helpdesk', enableRAG: true, loop: false })
+    );
+  }
+
   @Get('timeline')
   timeline() {
     return this.chat.timeline();

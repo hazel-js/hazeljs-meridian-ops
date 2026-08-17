@@ -115,16 +115,33 @@ export const PACKAGES = [
       format: 'hazeljs.agent.dna',
       version: '1.0.0',
       name: 'ops-router',
-      description: 'Intent router — delegates to support-desk, fraud-triage, or api-concierge.',
+      description: 'Intent router — delegates to support-desk, fraud-triage, api-concierge, or helpdesk.',
       systemPrompt:
-        'You are the Meridian Ops router. Pick exactly one specialist: support-desk, fraud-triage, or api-concierge.',
+        'You are the Meridian Ops router. Pick exactly one specialist: support-desk, fraud-triage, api-concierge, or helpdesk.',
       tools: [
         { name: 'support-desk', description: 'Delegate to support' },
         { name: 'fraud-triage', description: 'Delegate to fraud' },
         { name: 'api-concierge', description: 'Delegate to concierge' },
+        { name: 'helpdesk', description: 'Delegate to RAG helpdesk' },
       ],
       exportedAt: '2026-08-07T12:00:00.000Z',
     },
     { keywords: ['router', 'multi-agent'] }
+  ),
+  pkg(
+    '@meridian/helpdesk-agent',
+    '1.0.0',
+    {
+      format: 'hazeljs.agent.dna',
+      version: '1.0.0',
+      name: 'helpdesk',
+      description:
+        'Knowledge-grounded helpdesk — refund SLA, tracking, returns policy via RAG (no money tools).',
+      systemPrompt:
+        'You are the Meridian Commerce knowledge helpdesk. Answer ONLY from retrieved knowledge. Never invent refund IDs.',
+      tools: [{ name: 'listKbTopics', description: 'List KB topic ids' }],
+      exportedAt: '2026-08-15T12:00:00.000Z',
+    },
+    { keywords: ['rag', 'helpdesk', 'kb'] }
   ),
 ];

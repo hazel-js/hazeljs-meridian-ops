@@ -1,5 +1,7 @@
 /**
  * WHY: One AgentRuntime for all Meridian specialists + Skillgate + DNA overlay.
+ * Phase 6: optional SQL durable store, Flow HITL peer, RAG helpdesk.
+ * Tool calls go through @hazeljs/agent-gatekeeper (authorizationGate).
  */
 
 import * as path from 'path';
@@ -15,7 +17,6 @@ import {
   GovernanceGate,
   defaultAgentGovernance,
   FileTimelineStore,
-  createDurableRunStore,
   type AgentContract,
   type AgentEvent,
   type AgentRuntimeConfig,
@@ -27,15 +28,33 @@ import { SafeDeskAgent } from './safe.agent';
 import { FraudTriageAgent } from './fraud.agent';
 import { OpsRouterAgent } from './router.agent';
 import { ApiConciergeAgent } from './api-concierge.agent';
+import { HelpdeskAgent } from './helpdesk.agent';
 import { applyDnaOverlays, formatOverlayReport } from '../platform/dna-overlay';
 import { wireSkillgate, formatReport } from '../skillgate/wire-skills';
 import { buildGateFromModule } from '../skillgate/build-gate';
+import { createMeridianDurableStore, meridianDurableBackend } from '../durable/create-meridian-durable';
+import { createOptionalFlowPeer } from '../flow/create-flow-peer';
+import { helpdeskRag } from '../rag/helpdesk-kb';
+import {
+  bindGatekeeper,
+  createMeridianGatekeeper,
+  formatGatekeeperBoot,
+  gatekeeperFor,
+  type MeridianGatekeeperBundle,
+} from '../gatekeeper';
 
 export const supportContract: AgentContract = {
   name: 'support-desk-slo',
   maxLatencyMs: 120_000,
   fallbackAgent: 'safe-desk',
 };
+
+let pendingGatekeeper: MeridianGatekeeperBundle | undefined;
+
+function attachGatekeeper(runtime: AgentRuntime): MeridianGatekeeperBundle | undefined {
+  if (pendingGatekeeper) bindGatekeeper(runtime, pendingGatekeeper);
+  return gatekeeperFor(runtime);
+}
 
 export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
   const llm = process.env.OPENAI_API_KEY ? new OpenAILLMProvider() : new DemoLLMProvider();
@@ -68,9 +87,17 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
 
   const timelineFile =
     process.env.AGENT_OS_TIMELINE_FILE ?? path.join(process.cwd(), '.hazel', 'timeline.jsonl');
-  const durableDir =
-    process.env.AGENT_OS_DURABLE_DIR ?? path.join(process.cwd(), '.hazel', 'runs');
-  const durable = createDurableRunStore(durableDir);
+  const durable = createMeridianDurableStore();
+  const flowEngine = createOptionalFlowPeer();
+  const gatekeeper = createMeridianGatekeeper({ humanTasks: durable.humanTaskService });
+  pendingGatekeeper = gatekeeper;
+
+  if (process.env.JEST_WORKER_ID === undefined) {
+    console.log(
+      `Durable backend: ${meridianDurableBackend()}${flowEngine ? ' · Flow HITL peer: on' : ''}`
+    );
+    console.log(formatGatekeeperBoot(gatekeeper));
+  }
 
   return {
     llmProvider: llm,
@@ -80,6 +107,7 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
     enableRetry: true,
     enableCircuitBreaker: false,
     policyEngine,
+    authorizationGate: gatekeeper.enabled ? gatekeeper.authorizationGate : undefined,
     governanceGate: new GovernanceGate(defaultAgentGovernance()),
     costOptimizer: new CostOptimizer(),
     timelineStore: new FileTimelineStore(timelineFile),
@@ -87,6 +115,8 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
     runRepository: durable.runRepository,
     checkpointService: durable.checkpointService,
     humanTaskService: durable.humanTaskService,
+    ragService: helpdeskRag as never,
+    flowEngine: flowEngine as never,
   };
 }
 
@@ -96,19 +126,29 @@ export function wireDemoHitl(runtime: AgentRuntime): void {
   runtime.on(AgentEventType.TOOL_APPROVAL_REQUESTED, (event) => {
     const data = (event as AgentEvent<{ requestId?: string }>).data;
     if (!data?.requestId) return;
-    try {
-      runtime.approveToolExecution(data.requestId, 'demo-auto-approver');
-    } catch {
-      /* durable path may not have an in-process waiter */
-    }
-    void runtime
-      .approveAndResume(data.requestId, {
-        approved: true,
-        approvedBy: 'demo-auto-approver',
-      })
-      .catch(() => {
-        /* no durable run yet — in-process approve is enough */
-      });
+    const requestId = data.requestId;
+    const bundle = gatekeeperFor(runtime);
+    void (async () => {
+      let resumeId = requestId;
+      if (bundle?.enabled) {
+        await bundle.approvalProvider.resolve(requestId, 'approved', 'demo-auto-approver');
+        const rec = await bundle.approvalProvider.get(requestId);
+        if (rec?.runId) resumeId = rec.runId;
+      }
+      try {
+        runtime.approveToolExecution(requestId, 'demo-auto-approver');
+      } catch {
+        /* durable path may not have an in-process waiter */
+      }
+      await runtime
+        .approveAndResume(resumeId, {
+          approved: true,
+          approvedBy: 'demo-auto-approver',
+        })
+        .catch(() => {
+          /* no durable run yet — in-process approve is enough */
+        });
+    })();
   });
 }
 
@@ -118,15 +158,18 @@ function registerAllAgents(runtime: AgentRuntime): void {
   runtime.registerAgent(FraudTriageAgent);
   runtime.registerAgent(OpsRouterAgent);
   runtime.registerAgent(ApiConciergeAgent);
+  runtime.registerAgent(HelpdeskAgent);
   runtime.registerAgentInstance('support-desk', new SupportDeskAgent());
   runtime.registerAgentInstance('safe-desk', new SafeDeskAgent());
   runtime.registerAgentInstance('fraud-triage', new FraudTriageAgent());
   runtime.registerAgentInstance('ops-router', new OpsRouterAgent());
   runtime.registerAgentInstance('api-concierge', new ApiConciergeAgent());
+  runtime.registerAgentInstance('helpdesk', new HelpdeskAgent());
 }
 
 export function createStandaloneAgentOs(): AgentRuntime {
   const runtime = new AgentRuntime(createAgentOsRuntimeConfig());
+  attachGatekeeper(runtime);
   registerAllAgents(runtime);
   wireDemoHitl(runtime);
   if (process.env.JEST_WORKER_ID === undefined) {
@@ -141,6 +184,7 @@ export function createStandaloneAgentOs(): AgentRuntime {
 
 export async function createStandaloneAgentOsWithOverlay(): Promise<AgentRuntime> {
   const runtime = new AgentRuntime(createAgentOsRuntimeConfig());
+  attachGatekeeper(runtime);
   registerAllAgents(runtime);
   wireDemoHitl(runtime);
   const { report } = wireSkillgate(runtime, buildGateFromModule());
@@ -159,6 +203,7 @@ export class MeridianBootstrap {
   constructor(private readonly agents: AgentService) {
     // getRuntime() triggers AgentService discovery (registerAgent + tools + @Delegate patch).
     const runtime = this.agents.getRuntime();
+    attachGatekeeper(runtime);
     wireDemoHitl(runtime);
     const { report } = wireSkillgate(runtime, buildGateFromModule());
     console.log(formatReport(report));
@@ -174,6 +219,7 @@ export class MeridianBootstrap {
     FraudTriageAgent,
     OpsRouterAgent,
     ApiConciergeAgent,
+    HelpdeskAgent,
     MeridianBootstrap,
   ],
   exports: [AgentModule],

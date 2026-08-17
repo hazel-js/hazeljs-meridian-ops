@@ -24,4 +24,28 @@ export function skillgateFlags() {
   };
 }
 
+/** Default on. Set AGENT_OS_GATEKEEPER=0 to fall back to PolicyEngine only. */
+export function gatekeeperEnabled(): boolean {
+  const v = process.env.AGENT_OS_GATEKEEPER?.trim().toLowerCase();
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  return true;
+}
+
+export function gatekeeperMode(): 'enforce' | 'audit' | 'disabled' {
+  const v = process.env.AGENT_OS_GATEKEEPER_MODE?.trim().toLowerCase();
+  if (v === 'audit' || v === 'disabled' || v === 'enforce') return v;
+  return 'enforce';
+}
+
+export function meridianTenantId(): string {
+  return process.env.MERIDIAN_TENANT_ID?.trim() || 'meridian';
+}
+
+export function meridianEnvironment(): string {
+  return (
+    process.env.GATEKEEPER_ENVIRONMENT?.trim() ||
+    (process.env.NODE_ENV === 'production' ? 'production' : 'development')
+  );
+}
+
 export const AGENT_NAME = 'api-concierge';

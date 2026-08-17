@@ -9,7 +9,7 @@ Canonical HazelJS Agent OS flagship. Absorbs patterns from `hazeljs-agent-os-sta
 ```bash
 cp -n .env.example .env
 npm install
-npm run store:sync      # publish 5 DNA → .hazel/agents + lock
+npm run store:sync      # publish 6 DNA → .hazel/agents + lock
 npm run platform:sync   # apply manifests → .hazel/platform
 npm run tour            # F1–F22 map + curls
 npm run dev             # http://localhost:3060
@@ -17,14 +17,35 @@ npm run dev             # http://localhost:3060
 
 Leave `OPENAI_API_KEY` empty (DemoLLM). Set `AGENT_OS_HITL=1` for real approval pauses.
 
-Boot log should show Skillgate report + `DNA overlay: …` (prompt/policies from platform or `dna/*.marketplace.json`).
+Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforce · deny · …`.
+
+![Meridian tour flow](./docs/assets/meridian-tour.svg)
 
 ### Feature: HITL refunds
 
 **Problem:** Auto-refunds lose money when the model is wrong or the process restarts.  
-**How Meridian does it:** `processRefund` requiresApproval + durableSuspend; approve via API.  
+**How Meridian does it:** `@hazeljs/agent-gatekeeper` requires approval on `processRefund` (default deny for unknown tools) + durableSuspend; approve via API.  
 **Try:** `AGENT_OS_HITL=1` + `POST /api/support/chat` + `POST /api/approvals/:id/approve`.  
 **Not this:** `hazel agent run` stubs — they don't move money.
+
+### Feature: Agent Gatekeeper
+
+**Problem:** PolicyEngine on the runtime is skipped once an authorization gate is set; in-memory audit/approvals do not survive a second replica.  
+**How Meridian does it:** `authorizationGate` on AgentRuntime, durable HumanTask approvals, console JSON audit. Optional `GATEKEEPER_REDIS_URL` for multi-replica consume. MCP `tools/call` is wrapped with `protectMcpInvoke`.  
+**Try:** `GET /api/gatekeeper/status` and `npm run gatekeeper:validate`.  
+**Off:** `AGENT_OS_GATEKEEPER=0` falls back to PolicyEngine only.
+
+### Phase 6 (optional v1.1)
+
+| Lab | How |
+| --- | --- |
+| SQL durable runs | `AGENT_OS_DURABLE_BACKEND=sql` + `npm run db:push` |
+| RAG helpdesk | `POST /api/helpdesk/chat` + `@meridian/helpdesk-agent` |
+| Flow HITL peer | `AGENT_OS_FLOW_PEER=1` (ADR-003 mirror on refund pause) |
+| Remote registry | `npm run store:sync:remote` with `HAZEL_REGISTRY_*` |
+| K8s dry-run | `npm run platform:k8s-dryrun` — see [platform/APPENDIX-kubernetes.md](./platform/APPENDIX-kubernetes.md) |
+
+Details: [TOUR.md](./TOUR.md#phase-6-labs-optional--skip-on-first-pass).
 
 ---
 
@@ -41,6 +62,7 @@ DNA and the platform control plane sit **beside** that runtime. They answer diff
 | **Store** (`store:sync`) | How do we *version and share* that package? (registry + `.hazel/agents` lock) |
 | **Platform** (`platform:sync` / `hazel agent apply`) | What should *this environment* run? (Definitions / Deployments as desired state) |
 | **Runtime** (`POST /api/chat`) | What happens *right now*? (steps, HITL, timeline) |
+| **Gatekeeper** (`@hazeljs/agent-gatekeeper`) | May this agent call this tool *now*? (default deny, HITL, audit) |
 
 **DNA ≠ implementation.** DNA lists tool *names* and policies; real side effects stay in TypeScript. Overlay never replaces `@Tool` handlers with empty stubs.
 
@@ -76,6 +98,7 @@ platform/*.yaml  (nested dna  OR  packageRef → store)
         │  npm run dev  (AGENT_OS_DNA_OVERLAY=1)
         ▼
   AgentRuntime overlays prompt / model / policies
+  Agent Gatekeeper authorizes each tool call (default deny)
   Tools still come from app @Tool / Skillgate
         │
         ▼
@@ -127,18 +150,21 @@ Disable overlay with `AGENT_OS_DNA_OVERLAY=0` (decorator metadata only).
 | `safe-desk` | Read-only fallback / twin |
 | `api-concierge` | Skillgate REST skills |
 | `fraud-triage` | Risk + HITL freeze |
+| `helpdesk` | RAG policy FAQ (`POST /api/helpdesk/chat`) |
 
 ## Docs
 
-- [TOUR.md](./TOUR.md) — 15-minute walkthrough  
+- [TOUR.md](./TOUR.md) — 15-minute walkthrough + Phase 6 labs  
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — layer diagram (short)  
+- [agent-gatekeeper.yaml](./agent-gatekeeper.yaml) — CI policy file (`npm run gatekeeper:validate`)  
 - [platform/README.md](./platform/README.md) — apply vs run  
+- [platform/APPENDIX-kubernetes.md](./platform/APPENDIX-kubernetes.md) — k8s dry-run  
 
 ## Compared to other entry points
 
 | Asset | Use when |
 | --- | --- |
-| **`hazeljs-meridian-ops` (this repo)** | Learn the full Agent OS + DNA + Store + Skillgate + router + apply story |
+| **`hazeljs-meridian-ops` (this repo)** | Learn the full Agent OS + DNA + Store + Skillgate + Gatekeeper + router + apply story |
 | `hazeljs-agent-os-starter` | Minimal support-desk template |
 | `hazeljs-skillgate-agent-starter` | Skillgate-only thin template |
 | `hazel agent new --template agent-os` | Scaffold a new empty desk to grow toward Meridian |

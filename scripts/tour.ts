@@ -13,10 +13,10 @@ const FEATURES: Array<{ id: string; name: string; try: string }> = [
   { id: 'F5', name: 'Project materialize', try: '.hazel/agents/lock.json' },
   { id: 'F6', name: 'CLI smoke vs prod', try: 'npm run demo:smoke-cli' },
   { id: 'F7', name: 'HITL / durable suspend', try: 'AGENT_OS_HITL=1 + approvals API' },
-  { id: 'F8', name: 'Policies', try: 'processRefund / freezeAccount require_approval' },
+  { id: 'F8', name: 'Policies / Gatekeeper', try: 'GET /api/gatekeeper/status · processRefund require_approval' },
   { id: 'F9', name: 'Contracts + fallback', try: 'support-desk → safe-desk' },
   { id: 'F10', name: 'Digital twin / canary', try: '{"canary":true} on support chat' },
-  { id: 'F11', name: 'Multiple DNA', try: '5 packages in lock after store:sync' },
+  { id: 'F11', name: 'Multiple DNA', try: '6 packages in lock after store:sync' },
   { id: 'F12', name: 'Multi-agent / router', try: `POST ${base}/api/chat` },
   { id: 'F13', name: 'Skillgate', try: `GET ${base}/api/skillgate/report` },
   { id: 'F14', name: 'MCP export', try: 'npm run mcp (API must be up)' },
@@ -27,7 +27,7 @@ const FEATURES: Array<{ id: string; name: string; try: string }> = [
   { id: 'F19', name: 'Local control plane', try: 'npm run platform:sync' },
   { id: 'F20', name: 'packageRef in manifests', try: 'platform/support.packageRef.yaml' },
   { id: 'F21', name: 'Platform events', try: '.hazel/platform/events.jsonl' },
-  { id: 'F22', name: 'Optional remote registry', try: 'HAZEL_REGISTRY_URL (Journey D)' },
+  { id: 'F22', name: 'Optional remote registry', try: 'npm run store:sync:remote (HAZEL_REGISTRY_*)' },
 ];
 
 console.log('Meridian Ops — Feature tour (F1–F22)\n');
@@ -35,6 +35,8 @@ for (const f of FEATURES) {
   console.log(`${f.id.padEnd(4)} ${f.name}`);
   console.log(`     try: ${f.try}\n`);
 }
+
+console.log('Phase 6 (optional): SQL durable · RAG helpdesk · Flow peer · k8s dry-run — see TOUR.md\n');
 
 console.log(`Sample curls (server on :${PORT}):\n`);
 console.log(`curl -s ${base}/api/support/chat -H 'content-type: application/json' -d '{"message":"Where is ORD-1001?"}'`);

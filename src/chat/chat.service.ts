@@ -10,16 +10,19 @@ import {
   type AgentRuntime,
 } from '@hazeljs/agent';
 import { supportContract } from '../agents/agents.module';
+import { gatekeeperFor } from '../gatekeeper';
 
 export interface ChatRequest {
   message: string;
   sessionId?: string;
   userId?: string;
-  /** Default ops-router. Override: support-desk | fraud-triage | api-concierge | safe-desk */
+  /** Default ops-router. Override: support-desk | fraud-triage | api-concierge | safe-desk | helpdesk */
   agent?: string;
   loop?: boolean;
   contract?: boolean;
   canary?: boolean;
+  /** Force RAG retrieval (helpdesk enables this by default). */
+  enableRAG?: boolean;
 }
 
 export type AgentHost = {
@@ -64,11 +67,14 @@ export class ChatService {
     const successScore = Number(process.env.AGENT_OS_SUCCESS_SCORE ?? 80);
     const maxIterations = Number(process.env.AGENT_OS_MAX_LOOP ?? 4);
     const useContract = agent === 'support-desk' && req.contract !== false;
+    const enableRAG = req.enableRAG === true || agent === 'helpdesk';
 
     const executePrimary = () =>
       this.host.execute(agent, req.message, {
         sessionId: req.sessionId ?? `session-${Date.now()}`,
         userId: req.userId ?? 'demo-user',
+        enableRAG,
+        ragTopK: enableRAG ? 3 : undefined,
         loop:
           req.loop === false
             ? undefined
@@ -104,22 +110,36 @@ export class ChatService {
 
   async approve(requestId: string, approvedBy = 'meridian-ops') {
     const runtime = this.host.getRuntime();
+    const bundle = gatekeeperFor(runtime);
+    let resumeId = requestId;
+    if (bundle?.enabled) {
+      await bundle.approvalProvider.resolve(requestId, 'approved', approvedBy);
+      const rec = await bundle.approvalProvider.get(requestId);
+      if (rec?.runId) resumeId = rec.runId;
+    }
     try {
       this.host.approveToolExecution(requestId, approvedBy);
     } catch {
       /* no in-process waiter */
     }
-    return runtime.approveAndResume(requestId, { approved: true, approvedBy });
+    return runtime.approveAndResume(resumeId, { approved: true, approvedBy });
   }
 
   async reject(requestId: string, rejectedBy = 'meridian-ops') {
     const runtime = this.host.getRuntime();
+    const bundle = gatekeeperFor(runtime);
+    let resumeId = requestId;
+    if (bundle?.enabled) {
+      await bundle.approvalProvider.resolve(requestId, 'rejected', rejectedBy);
+      const rec = await bundle.approvalProvider.get(requestId);
+      if (rec?.runId) resumeId = rec.runId;
+    }
     try {
       this.host.rejectToolExecution(requestId);
     } catch {
       /* */
     }
-    return runtime.approveAndResume(requestId, { approved: false, approvedBy: rejectedBy });
+    return runtime.approveAndResume(resumeId, { approved: false, approvedBy: rejectedBy });
   }
 
   timeline(agentName?: string) {

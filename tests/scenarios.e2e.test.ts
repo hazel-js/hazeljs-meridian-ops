@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { createStandaloneAgentOs } from '../src/agents/agents.module';
 import { ChatService } from '../src/chat/chat.service';
 

@@ -1,0 +1,25 @@
+{
+  "name": "@meridian/helpdesk-agent",
+  "version": "1.0.0",
+  "description": "Knowledge-grounded helpdesk — refund SLA, tracking, returns policy via RAG (no money tools).",
+  "dna": {
+    "format": "hazeljs.agent.dna",
+    "version": "1.0.0",
+    "name": "helpdesk",
+    "description": "Knowledge-grounded helpdesk — refund SLA, tracking, returns policy via RAG (no money tools).",
+    "systemPrompt": "You are the Meridian Commerce knowledge helpdesk. Answer ONLY from retrieved knowledge. Never invent refund IDs.",
+    "tools": [
+      {
+        "name": "listKbTopics",
+        "description": "List KB topic ids"
+      }
+    ],
+    "exportedAt": "2026-08-15T12:00:00.000Z"
+  },
+  "readme": "@meridian/helpdesk-agent for Meridian Ops",
+  "keywords": [
+    "rag",
+    "helpdesk",
+    "kb"
+  ]
+}

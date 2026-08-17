@@ -1,5 +1,7 @@
 # Meridian 15-minute tour
 
+![Tour flow](./docs/assets/meridian-tour.svg)
+
 ## 1. Sync packages + platform (2 min)
 
 ```bash
@@ -16,7 +18,7 @@ npm run dev
 # open http://localhost:3060/__hazel
 ```
 
-Boot log should show Skillgate report + `DNA overlay: …`.
+Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforce · deny · …` (+ durable backend line).
 
 ## 3. Track an order (F1–F2)
 
@@ -29,6 +31,8 @@ curl -s localhost:3060/api/support/chat \
 ## 4. Refund HITL off then on (F7–F8)
 
 ```bash
+curl -s localhost:3060/api/gatekeeper/status | jq '{mode, defaultDecision, approvalBackend, policies: [.policies[].id]}'
+
 # Auto-approve (default AGENT_OS_HITL=0)
 curl -s localhost:3060/api/support/chat \
   -H 'content-type: application/json' \
@@ -80,4 +84,51 @@ cat .hazel/platform/events.jsonl | tail -5
 
 ## 10. Optional remote registry (F22 / Journey D)
 
-Point `HAZEL_REGISTRY_URL` + `HAZEL_REGISTRY_TOKEN` at slimmed `hazeljs-cloud-backend`. Local run never requires Cloud.
+Local tour never requires Cloud. To demo a hosted registry (slim `hazeljs-cloud-backend` or Team URL):
+
+```bash
+export HAZEL_REGISTRY_URL=http://127.0.0.1:3000
+export HAZEL_REGISTRY_TOKEN=<api-key>   # from cloud seed:dev / org key
+npm run store:sync:remote
+```
+
+Still materializes locally so Meridian boot does not depend on the remote.
+
+---
+
+## Phase 6 labs (optional — skip on first pass)
+
+### A. Prisma / SQL durable runs
+
+```bash
+export DATABASE_URL=file:./.hazel/meridian.db
+export AGENT_OS_DURABLE_BACKEND=sql
+npm run db:push
+# restart npm run dev — boot prints "Durable backend: sql"
+# Repeat HITL refund; runs persist in SQLite instead of .hazel/runs/
+```
+
+### B. RAG helpdesk
+
+```bash
+curl -s localhost:3060/api/helpdesk/chat \
+  -H 'content-type: application/json' \
+  -d '{"message":"What is the refund SLA?"}' | jq '{agent, response, steps}'
+```
+
+### C. Flow HITL peer (refund saga bridge)
+
+```bash
+export AGENT_OS_FLOW_PEER=1
+export AGENT_OS_HITL=1
+# restart — boot prints "Flow HITL peer: on"
+# Refund chat suspends AgentRun and mirrors WAITING on FlowEngine (ADR-003).
+```
+
+### D. Kubernetes dry-run appendix
+
+```bash
+npm run platform:k8s-dryrun
+# see platform/APPENDIX-kubernetes.md
+# runtimeClassName: kubernetes (not "nested") — does not replace local tour
+```

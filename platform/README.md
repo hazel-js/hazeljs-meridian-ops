@@ -13,4 +13,11 @@ Full story (purpose, when useful, sync → overlay workflow): **[README — DNA 
 
 Meridian defaults to `runtimeClassName: local`. Cloud registry and K8s are optional and not required for the tour.
 
+Kubernetes dry-run appendix (does **not** run in default `platform:sync`):
+
+```bash
+npm run platform:k8s-dryrun
+# see APPENDIX-kubernetes.md — runtimeClassName: kubernetes
+```
+
 After apply, restart (or let ts-node-dev respawn) so `AGENT_OS_DNA_OVERLAY` can hot-reload prompt/policies from the platform store.

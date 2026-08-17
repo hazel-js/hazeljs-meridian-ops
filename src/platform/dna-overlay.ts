@@ -24,6 +24,7 @@ import {
   type HotReloadResult,
 } from '@hazeljs/agent';
 import { projectRegistryRoot } from '../config';
+import { gatekeeperFor, mergeDnaPolicies } from '../gatekeeper';
 
 export interface DnaOverlayEntry {
   source: 'platform' | 'file';
@@ -149,6 +150,8 @@ export async function applyDnaOverlays(
       continue;
     }
     const result = runtime.hotReloadDna(safeOverlayDna(dna));
+    const bundle = gatekeeperFor(runtime);
+    if (bundle?.enabled) mergeDnaPolicies(bundle.policies, dna);
     seen.add(dna.name);
     applied.push({ source: 'platform', definitionName, result });
   }
@@ -172,6 +175,8 @@ export async function applyDnaOverlays(
       continue;
     }
     const result = runtime.hotReloadDna(safeOverlayDna(fileDna));
+    const bundle = gatekeeperFor(runtime);
+    if (bundle?.enabled) mergeDnaPolicies(bundle.policies, fileDna);
     seen.add(fileDna.name);
     applied.push({ source: 'file', result });
   }

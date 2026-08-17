@@ -3,6 +3,7 @@ import { AgentService } from '@hazeljs/agent';
 import { AGENT_NAME } from '../config';
 import { buildGateFromModule } from '../skillgate/build-gate';
 import { formatReport } from '../skillgate/wire-skills';
+import { gatekeeperFor } from '../gatekeeper';
 
 @Controller('/api/skillgate')
 export class ReportController {
@@ -32,6 +33,32 @@ export class ReportController {
         capability: t.capability,
         riskLevel: t.riskLevel,
         metadata: t.metadata,
+      })),
+    };
+  }
+}
+
+@Controller('/api/gatekeeper')
+export class GatekeeperController {
+  constructor(private readonly agents: AgentService) {}
+
+  @Get('/status')
+  status() {
+    const bundle = gatekeeperFor(this.agents.getRuntime());
+    if (!bundle) {
+      return { enabled: false, reason: 'Gatekeeper not bound to this runtime' };
+    }
+    return {
+      enabled: bundle.enabled,
+      mode: bundle.gatekeeper.mode,
+      defaultDecision: bundle.gatekeeper.defaultDecision,
+      approvalBackend: bundle.approvalBackend,
+      auditBackend: bundle.auditBackend,
+      policies: bundle.policies.map((p) => ({
+        id: p.id,
+        version: p.version,
+        priority: p.priority ?? 0,
+        tools: p.match?.tools,
       })),
     };
   }

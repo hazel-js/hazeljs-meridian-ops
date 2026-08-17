@@ -1,0 +1,54 @@
+# Agent Gatekeeper — Meridian policies
+# Runtime TypeScript policies in src/gatekeeper/policies.ts are canonical.
+# This file is for `hazel gatekeeper validate` / CI.
+
+mode: enforce
+defaultDecision: deny
+
+policies:
+  - id: allow-catalog-reads
+    version: '1.0.0'
+    priority: 10
+    match:
+      tools:
+        - lookupOrder
+        - trackShipment
+        - getRiskSignals
+        - listKbTopics
+        - listOrders
+        - getOrder
+        - getShipment
+        - listRefunds
+        - listTickets
+        - support-desk
+        - fraud-triage
+        - api-concierge
+        - helpdesk
+
+  - id: deny-refund-without-order
+    version: '1.0.0'
+    priority: 100
+    match:
+      tools: [processRefund]
+    rules:
+      denyWhenFieldEquals:
+        - field: orderId
+          value: ''
+
+  - id: refund-needs-approval
+    version: '1.0.0'
+    priority: 50
+    match:
+      tools: [processRefund]
+
+  - id: freeze-needs-approval
+    version: '1.0.0'
+    priority: 50
+    match:
+      tools: [freezeAccount]
+
+  - id: skillgate-writes-need-approval
+    version: '1.0.0'
+    priority: 50
+    match:
+      tools: [createTicket, createRefund]

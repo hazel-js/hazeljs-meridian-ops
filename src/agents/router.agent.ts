@@ -13,6 +13,7 @@ import { Agent, Delegate } from '@hazeljs/agent';
 - support-desk: order status, tracking, refunds, customer CX
 - fraud-triage: account risk, freezes, fraud
 - api-concierge: ops listing tickets/refunds via REST skills, Skillgate report questions
+- helpdesk: policy FAQ (refund SLA, returns window, support hours) — knowledge/RAG, no money tools
 Pass the user's full message as input. Do not invent facts yourself.`,
   maxSteps: 4,
   temperature: 0.1,
@@ -43,6 +44,15 @@ export class OpsRouterAgent {
     inputField: 'input',
   })
   async toConcierge(_input: string): Promise<string> {
+    return '';
+  }
+
+  @Delegate({
+    agent: 'helpdesk',
+    description: 'Policy / FAQ helpdesk grounded in Meridian KB (RAG)',
+    inputField: 'input',
+  })
+  async toHelpdesk(_input: string): Promise<string> {
     return '';
   }
 }

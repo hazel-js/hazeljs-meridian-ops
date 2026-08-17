@@ -2,7 +2,6 @@
  * One-shot scenarios without HTTP (standalone runtime).
  */
 
-import 'reflect-metadata';
 import { createStandaloneAgentOsWithOverlay } from '../src/agents/agents.module';
 import { ChatService } from '../src/chat/chat.service';
 

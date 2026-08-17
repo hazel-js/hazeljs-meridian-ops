@@ -1,0 +1,31 @@
+apiVersion: agent.hazeljs.dev/v1alpha1
+kind: AgentDefinition
+metadata:
+  name: support-agent-k8s
+spec:
+  packageRef:
+    name: "@meridian/support-desk-agent"
+    version: "1.0.0"
+---
+apiVersion: agent.hazeljs.dev/v1alpha1
+kind: AgentDeployment
+metadata:
+  name: support-k8s-dryrun
+spec:
+  definitionRef:
+    name: support-agent-k8s
+  # Selects KubernetesDeploymentBackend (alias: k8s). NOT the default Meridian tour.
+  runtimeClassName: kubernetes
+  replicas: 1
+  backend:
+    kubernetes:
+      dryRun: true
+      image: ghcr.io/example/meridian-ops:local
+      namespace: agents
+      containerPort: 3060
+      resources:
+        requests:
+          cpu: "100m"
+          memory: 256Mi
+        limits:
+          memory: 512Mi

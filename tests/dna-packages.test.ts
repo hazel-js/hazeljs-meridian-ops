@@ -1,16 +1,16 @@
-import 'reflect-metadata';
 import * as fs from 'fs';
 import * as path from 'path';
 import { assertValidMarketplacePackage, loadMarketplacePackage } from '@hazeljs/agent';
 import { PACKAGES } from '../scripts/dna-packages';
 
 describe('Meridian DNA packages', () => {
-  it('defines five marketplace packages', () => {
-    expect(PACKAGES).toHaveLength(5);
+  it('defines six marketplace packages', () => {
+    expect(PACKAGES).toHaveLength(6);
     const names = PACKAGES.map((p) => p.name).sort();
     expect(names).toEqual([
       '@meridian/api-concierge-agent',
       '@meridian/fraud-triage-agent',
+      '@meridian/helpdesk-agent',
       '@meridian/router-agent',
       '@meridian/safe-desk-agent',
       '@meridian/support-desk-agent',
