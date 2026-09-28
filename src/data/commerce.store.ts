@@ -160,6 +160,18 @@ export const commerceStore = {
     return [...refunds];
   },
 
+  /** Undo a committed refund — used by @Compensate on processRefund when Agent VM rolls back. */
+  reverseRefund(refundId: string) {
+    const idx = refunds.findIndex((r) => r.id === refundId);
+    if (idx === -1) return { reversed: false as const, error: `No refund ${refundId}` };
+    const [refund] = refunds.splice(idx, 1);
+    const order = orders.get(refund.orderId);
+    if (order?.status === 'refunded') {
+      order.status = 'delivered';
+    }
+    return { reversed: true as const, refundId, orderId: refund.orderId };
+  },
+
   listCatalog() {
     return [
       { sku: 'HZL-TEE', name: 'Hazel Tee', priceUsd: 32 },

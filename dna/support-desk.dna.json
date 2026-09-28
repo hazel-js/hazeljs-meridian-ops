@@ -34,5 +34,20 @@
       "fallbackAgent": "safe-desk"
     }
   ],
+  "decisions": {
+    "refund-approval": {
+      "version": "1",
+      "objective": "Determine whether the requested refund should proceed",
+      "choices": ["approve", "reject", "review"],
+      "risk": "high",
+      "strategy": { "mode": "human-required" },
+      "provider": "hazel-agent",
+      "confidence": { "high": 0.95, "medium": 0.7 },
+      "execution": {
+        "approve": { "capability": "payments.refund" },
+        "review": { "hitl": true }
+      }
+    }
+  },
   "exportedAt": "2026-08-07T12:00:00.000Z"
 }

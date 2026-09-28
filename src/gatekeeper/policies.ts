@@ -1,11 +1,10 @@
 /**
  * Meridian Gatekeeper policies — default deny, explicit allows, HITL writes.
- *
- * DNA PolicyRule shapes (`effect: require_approval`) are converted via
- * policiesFromDna so overlay stays compatible.
  */
 
-import { policiesFromDna, type AgentGatekeeperPolicy } from '@hazeljs/agent-gatekeeper';
+import type { AgentGatekeeperPolicy } from '@hazeljs/agent-gatekeeper';
+
+export { mergeDnaPolicies } from '@hazeljs/agent-gatekeeper';
 
 /** Read / delegate tools that may run without human approval. */
 export const MERIDIAN_ALLOW_TOOLS = [
@@ -90,18 +89,23 @@ export function createMeridianPolicies(): AgentGatekeeperPolicy[] {
     },
   };
 
-  return [allowReads, denyEmptyRefund, refundApproval, freezeApproval, skillgateWrites];
-}
+  /** Decision Runtime capability — allowed only after Decision policy + HITL path. */
+  const allowDecisionRefund: AgentGatekeeperPolicy = {
+    id: 'allow-decision-payments-refund',
+    version: '1.0.0',
+    priority: 40,
+    match: { tools: ['payments.refund'] },
+    rules: {
+      allowWhen: () => true,
+    },
+  };
 
-/** Merge DNA overlay policies into the live Gatekeeper list (same id replaces). */
-export function mergeDnaPolicies(
-  policies: AgentGatekeeperPolicy[],
-  dna: { policies?: unknown[] }
-): void {
-  const incoming = policiesFromDna(dna);
-  for (const next of incoming) {
-    const idx = policies.findIndex((p) => p.id === next.id);
-    if (idx >= 0) policies[idx] = next;
-    else policies.push(next);
-  }
+  return [
+    allowReads,
+    denyEmptyRefund,
+    refundApproval,
+    freezeApproval,
+    skillgateWrites,
+    allowDecisionRefund,
+  ];
 }

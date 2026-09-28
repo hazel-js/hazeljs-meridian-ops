@@ -9,8 +9,8 @@ import {
   type AgentExecutionResult,
   type AgentRuntime,
 } from '@hazeljs/agent';
+import { resumeGatekeeperDecision } from '@hazeljs/agent-gatekeeper';
 import { supportContract } from '../agents/agents.module';
-import { gatekeeperFor } from '../gatekeeper';
 
 export interface ChatRequest {
   message: string;
@@ -109,37 +109,11 @@ export class ChatService {
   }
 
   async approve(requestId: string, approvedBy = 'meridian-ops') {
-    const runtime = this.host.getRuntime();
-    const bundle = gatekeeperFor(runtime);
-    let resumeId = requestId;
-    if (bundle?.enabled) {
-      await bundle.approvalProvider.resolve(requestId, 'approved', approvedBy);
-      const rec = await bundle.approvalProvider.get(requestId);
-      if (rec?.runId) resumeId = rec.runId;
-    }
-    try {
-      this.host.approveToolExecution(requestId, approvedBy);
-    } catch {
-      /* no in-process waiter */
-    }
-    return runtime.approveAndResume(resumeId, { approved: true, approvedBy });
+    return resumeGatekeeperDecision(this.host.getRuntime(), requestId, 'approved', approvedBy);
   }
 
   async reject(requestId: string, rejectedBy = 'meridian-ops') {
-    const runtime = this.host.getRuntime();
-    const bundle = gatekeeperFor(runtime);
-    let resumeId = requestId;
-    if (bundle?.enabled) {
-      await bundle.approvalProvider.resolve(requestId, 'rejected', rejectedBy);
-      const rec = await bundle.approvalProvider.get(requestId);
-      if (rec?.runId) resumeId = rec.runId;
-    }
-    try {
-      this.host.rejectToolExecution(requestId);
-    } catch {
-      /* */
-    }
-    return runtime.approveAndResume(resumeId, { approved: false, approvedBy: rejectedBy });
+    return resumeGatekeeperDecision(this.host.getRuntime(), requestId, 'rejected', rejectedBy);
   }
 
   timeline(agentName?: string) {

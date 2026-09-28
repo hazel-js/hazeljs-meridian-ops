@@ -2,6 +2,7 @@
  * WHY: One AgentRuntime for all Meridian specialists + Skillgate + DNA overlay.
  * Phase 6: optional SQL durable store, Flow HITL peer, RAG helpdesk.
  * Tool calls go through @hazeljs/agent-gatekeeper (authorizationGate).
+ * Optional @hazeljs/agent-vm (AGENT_OS_AGENT_VM=1) for effect typing and rollback.
  */
 
 import * as path from 'path';
@@ -10,19 +11,18 @@ import {
   AgentModule,
   AgentService,
   AgentRuntime,
-  AgentEventType,
   PolicyEngine,
   defaultPiiMaskPolicies,
   CostOptimizer,
   GovernanceGate,
   defaultAgentGovernance,
   FileTimelineStore,
+  createHttpLlmProvider,
   type AgentContract,
-  type AgentEvent,
   type AgentRuntimeConfig,
 } from '@hazeljs/agent';
+import { wireDemoHitlAutoApprove } from '@hazeljs/agent-gatekeeper';
 import { DemoLLMProvider } from '../llm/demo-llm.provider';
-import { OpenAILLMProvider } from '../llm/openai-llm.provider';
 import { SupportDeskAgent } from './support.agent';
 import { SafeDeskAgent } from './safe.agent';
 import { FraudTriageAgent } from './fraud.agent';
@@ -42,6 +42,13 @@ import {
   gatekeeperFor,
   type MeridianGatekeeperBundle,
 } from '../gatekeeper';
+import {
+  attachAgentVm,
+  formatAgentVmBoot,
+  type MeridianAgentVmBundle,
+} from '../agent-vm';
+import { createMeridianDecisionRuntime } from '../decision/meridian-decision';
+import { DecisionController } from '../api/decision.controller';
 
 export const supportContract: AgentContract = {
   name: 'support-desk-slo',
@@ -56,8 +63,18 @@ function attachGatekeeper(runtime: AgentRuntime): MeridianGatekeeperBundle | und
   return gatekeeperFor(runtime);
 }
 
+function attachAgentVmIfEnabled(runtime: AgentRuntime): MeridianAgentVmBundle | undefined {
+  return attachAgentVm(runtime);
+}
+
 export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
-  const llm = process.env.OPENAI_API_KEY ? new OpenAILLMProvider() : new DemoLLMProvider();
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const llm = apiKey
+    ? createHttpLlmProvider({
+        apiKey,
+        model: process.env.AGENT_MODEL ?? 'gpt-4o-mini',
+      })
+    : new DemoLLMProvider();
 
   const policyEngine = new PolicyEngine([
     ...defaultPiiMaskPolicies(),
@@ -92,11 +109,18 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
   const gatekeeper = createMeridianGatekeeper({ humanTasks: durable.humanTaskService });
   pendingGatekeeper = gatekeeper;
 
+  createMeridianDecisionRuntime({
+    gatekeeper: gatekeeper.enabled ? gatekeeper.gatekeeper : undefined,
+    checkpoints: durable.checkpointService,
+    humanTasks: durable.humanTaskService,
+  });
+
   if (process.env.JEST_WORKER_ID === undefined) {
     console.log(
       `Durable backend: ${meridianDurableBackend()}${flowEngine ? ' · Flow HITL peer: on' : ''}`
     );
     console.log(formatGatekeeperBoot(gatekeeper));
+    console.log('Decision Runtime: refund-approval (POST /api/decision/refund)');
   }
 
   return {
@@ -122,34 +146,7 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
 
 /** Auto-approve unless AGENT_OS_HITL=1 or SKILLGATE_HITL=1. */
 export function wireDemoHitl(runtime: AgentRuntime): void {
-  if (process.env.AGENT_OS_HITL === '1' || process.env.SKILLGATE_HITL === '1') return;
-  runtime.on(AgentEventType.TOOL_APPROVAL_REQUESTED, (event) => {
-    const data = (event as AgentEvent<{ requestId?: string }>).data;
-    if (!data?.requestId) return;
-    const requestId = data.requestId;
-    const bundle = gatekeeperFor(runtime);
-    void (async () => {
-      let resumeId = requestId;
-      if (bundle?.enabled) {
-        await bundle.approvalProvider.resolve(requestId, 'approved', 'demo-auto-approver');
-        const rec = await bundle.approvalProvider.get(requestId);
-        if (rec?.runId) resumeId = rec.runId;
-      }
-      try {
-        runtime.approveToolExecution(requestId, 'demo-auto-approver');
-      } catch {
-        /* durable path may not have an in-process waiter */
-      }
-      await runtime
-        .approveAndResume(resumeId, {
-          approved: true,
-          approvedBy: 'demo-auto-approver',
-        })
-        .catch(() => {
-          /* no durable run yet — in-process approve is enough */
-        });
-    })();
-  });
+  wireDemoHitlAutoApprove(runtime);
 }
 
 function registerAllAgents(runtime: AgentRuntime): void {
@@ -171,10 +168,12 @@ export function createStandaloneAgentOs(): AgentRuntime {
   const runtime = new AgentRuntime(createAgentOsRuntimeConfig());
   attachGatekeeper(runtime);
   registerAllAgents(runtime);
+  const vmBundle = attachAgentVmIfEnabled(runtime);
   wireDemoHitl(runtime);
   if (process.env.JEST_WORKER_ID === undefined) {
     const { report } = wireSkillgate(runtime, buildGateFromModule());
     console.log(formatReport(report));
+    if (vmBundle) console.log(formatAgentVmBoot(vmBundle));
     void applyDnaOverlays(runtime).then((r) => {
       if (r.enabled && r.applied.length) console.log(formatOverlayReport(r));
     });
@@ -186,9 +185,11 @@ export async function createStandaloneAgentOsWithOverlay(): Promise<AgentRuntime
   const runtime = new AgentRuntime(createAgentOsRuntimeConfig());
   attachGatekeeper(runtime);
   registerAllAgents(runtime);
+  const vmBundle = attachAgentVmIfEnabled(runtime);
   wireDemoHitl(runtime);
   const { report } = wireSkillgate(runtime, buildGateFromModule());
   console.log(formatReport(report));
+  if (vmBundle) console.log(formatAgentVmBoot(vmBundle));
   const overlay = await applyDnaOverlays(runtime);
   console.log(formatOverlayReport(overlay));
   return runtime;
@@ -204,9 +205,11 @@ export class MeridianBootstrap {
     // getRuntime() triggers AgentService discovery (registerAgent + tools + @Delegate patch).
     const runtime = this.agents.getRuntime();
     attachGatekeeper(runtime);
+    const vmBundle = attachAgentVmIfEnabled(runtime);
     wireDemoHitl(runtime);
     const { report } = wireSkillgate(runtime, buildGateFromModule());
     console.log(formatReport(report));
+    if (vmBundle) console.log(formatAgentVmBoot(vmBundle));
     void applyDnaOverlays(runtime).then((r) => console.log(formatOverlayReport(r)));
   }
 }
@@ -222,6 +225,7 @@ export class MeridianBootstrap {
     HelpdeskAgent,
     MeridianBootstrap,
   ],
+  controllers: [DecisionController],
   exports: [AgentModule],
 })
 export class AgentsModule {}

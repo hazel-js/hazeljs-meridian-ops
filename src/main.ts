@@ -30,6 +30,8 @@ async function bootstrap() {
 │  POST /api/fraud/chat        fraud-triage (HITL freeze)            │
 │  GET  /api/skillgate/report  include / deny skills                 │
 │  GET  /api/gatekeeper/status policies + mode                       │
+│  GET  /api/agent-vm/status     effect typing (AGENT_OS_AGENT_VM=1) │
+│  POST /api/agent-vm/speculate/travel  branch speculation lab       │
 │  GET  /__hazel               Inspector                             │
 │                                                                    │
 │  npm run store:sync | platform:sync | tour                         │

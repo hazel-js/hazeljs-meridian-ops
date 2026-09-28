@@ -21,6 +21,14 @@ Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforc
 
 ![Meridian tour flow](./docs/assets/meridian-tour.svg)
 
+### Feature: Decision Runtime (refund judgments)
+
+**Problem:** LLMs invent refund verbs; confidence gets treated as permission.  
+**How Meridian does it:** `@hazeljs/decision` chooses from `approve | reject | review`, pauses for Decision HITL, then Gatekeeper authorizes `payments.refund`. Confidence never means permission.  
+**Try:** `POST /api/decision/refund` → `POST /api/decision/refund/:decisionId/resume` (see `next` in the first response).  
+**DNA:** `support-desk` declares `decisions.refund-approval`.  
+**Not this:** Agent Office UI lives in [hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) at `/office/decisions` — not in Meridian or Inspector.
+
 ### Feature: HITL refunds
 
 **Problem:** Auto-refunds lose money when the model is wrong or the process restarts.  
@@ -35,10 +43,18 @@ Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforc
 **Try:** `GET /api/gatekeeper/status` and `npm run gatekeeper:validate`.  
 **Off:** `AGENT_OS_GATEKEEPER=0` falls back to PolicyEngine only.
 
+### Feature: Agent VM (effect types & speculation)
+
+**Problem:** Agents try multiple plans in parallel; losing branches leak holds/refunds, and failed runs leave no undo story.  
+**How Meridian does it:** `@hazeljs/agent-vm` classifies tools (`@Read`, `@Reversible`, `@Irreversible`). Support-desk refunds are reversible with `@Compensate`. Set `AGENT_OS_AGENT_VM=1` to wire `EffectGate` on `ToolExecutor`.  
+**Try:** `GET /api/agent-vm/status` · `POST /api/agent-vm/speculate/travel` · `POST /api/agent-vm/runs/:runId/undo`.  
+**Off:** default (`AGENT_OS_AGENT_VM` unset) — kernel runs without effect journaling.
+
 ### Phase 6 (optional v1.1)
 
 | Lab | How |
 | --- | --- |
+| Agent VM | `AGENT_OS_AGENT_VM=1` + `/api/agent-vm/*` |
 | SQL durable runs | `AGENT_OS_DURABLE_BACKEND=sql` + `npm run db:push` |
 | RAG helpdesk | `POST /api/helpdesk/chat` + `@meridian/helpdesk-agent` |
 | Flow HITL peer | `AGENT_OS_FLOW_PEER=1` (ADR-003 mirror on refund pause) |
@@ -63,6 +79,7 @@ DNA and the platform control plane sit **beside** that runtime. They answer diff
 | **Platform** (`platform:sync` / `hazel agent apply`) | What should *this environment* run? (Definitions / Deployments as desired state) |
 | **Runtime** (`POST /api/chat`) | What happens *right now*? (steps, HITL, timeline) |
 | **Gatekeeper** (`@hazeljs/agent-gatekeeper`) | May this agent call this tool *now*? (default deny, HITL, audit) |
+| **Agent VM** (`@hazeljs/agent-vm`, opt-in) | What *effect class* is this tool? Can we speculate and undo? |
 
 **DNA ≠ implementation.** DNA lists tool *names* and policies; real side effects stay in TypeScript. Overlay never replaces `@Tool` handlers with empty stubs.
 
@@ -99,6 +116,7 @@ platform/*.yaml  (nested dna  OR  packageRef → store)
         ▼
   AgentRuntime overlays prompt / model / policies
   Agent Gatekeeper authorizes each tool call (default deny)
+  Agent VM (optional) journals reversible tools + speculation lab
   Tools still come from app @Tool / Skillgate
         │
         ▼

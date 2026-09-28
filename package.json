@@ -23,18 +23,19 @@
     "postinstall": "prisma generate || true"
   },
   "dependencies": {
-    "@hazeljs/agent": "2.0.2",
-    "@hazeljs/agent-gatekeeper": "2.0.2",
-    "@hazeljs/core": "2.0.2",
-    "@hazeljs/eval": "2.0.2",
-    "@hazeljs/flow": "2.0.2",
-    "@hazeljs/inspector": "2.0.2",
-    "@hazeljs/mcp": "2.0.2",
-    "@hazeljs/skillgate": "2.0.2",
-    "@hazeljs/swagger": "2.0.2",
-    "@hazeljs/testing": "2.0.2",
-    "@prisma/client": "^6.19.3",
-    "openai": "^6.0.0"
+    "@hazeljs/agent": "2.0.8",
+    "@hazeljs/agent-gatekeeper": "2.0.8",
+    "@hazeljs/agent-vm": "2.0.8",
+    "@hazeljs/core": "2.0.8",
+    "@hazeljs/decision": "2.0.8",
+    "@hazeljs/eval": "2.0.8",
+    "@hazeljs/flow": "2.0.8",
+    "@hazeljs/inspector": "2.0.8",
+    "@hazeljs/mcp": "2.0.8",
+    "@hazeljs/skillgate": "2.0.8",
+    "@hazeljs/swagger": "2.0.8",
+    "@hazeljs/testing": "2.0.8",
+    "@prisma/client": "^6.19.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

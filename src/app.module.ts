@@ -3,6 +3,7 @@ import { InspectorModule } from '@hazeljs/inspector';
 import { AgentsModule } from './agents/agents.module';
 import { CommerceApiModule } from './api/commerce-api.module';
 import { GatekeeperController, ReportController } from './api/report.controller';
+import { AgentVmController } from './api/agent-vm.controller';
 import { ChatModule } from './chat/chat.module';
 
 @HazelModule({
@@ -17,6 +18,6 @@ import { ChatModule } from './chat/chat.module';
       exposeUi: true,
     }),
   ],
-  controllers: [ReportController, GatekeeperController],
+  controllers: [ReportController, GatekeeperController, AgentVmController],
 })
 export class AppModule {}

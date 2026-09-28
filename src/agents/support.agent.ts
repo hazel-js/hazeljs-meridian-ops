@@ -4,6 +4,8 @@
 
 import { Service } from '@hazeljs/core';
 import { Agent, Tool } from '@hazeljs/agent';
+import { Read, Reversible, Compensate } from '@hazeljs/agent-vm';
+import type { EffectRecord } from '@hazeljs/agent-vm';
 import { commerceStore } from '../data/commerce.store';
 
 @Agent({
@@ -25,7 +27,9 @@ export class SupportDeskAgent {
     parameters: [
       { name: 'orderId', type: 'string', description: 'Order ID like ORD-1001', required: true },
     ],
+    readOnly: true,
   })
+  @Read()
   async lookupOrder({ orderId }: { orderId: string }) {
     const order = commerceStore.getOrder(orderId);
     if (!order) return { found: false, error: `No order ${orderId}` };
@@ -38,7 +42,9 @@ export class SupportDeskAgent {
     parameters: [
       { name: 'orderId', type: 'string', description: 'Order ID', required: true },
     ],
+    readOnly: true,
   })
+  @Read()
   async trackShipment({ orderId }: { orderId: string }) {
     return commerceStore.getShipment(orderId);
   }
@@ -53,6 +59,7 @@ export class SupportDeskAgent {
       { name: 'reason', type: 'string', description: 'Reason for refund', required: false },
     ],
   })
+  @Reversible({ compensate: 'processRefund' })
   async processRefund({
     orderId,
     amount,
@@ -65,5 +72,14 @@ export class SupportDeskAgent {
     const result = commerceStore.createRefund(orderId, amount, reason ?? 'customer request');
     if ('error' in result) return { success: false, error: result.error };
     return { success: true, refund: result };
+  }
+
+  @Compensate('processRefund')
+  async undoProcessRefund(
+    effect: EffectRecord<{ success: boolean; refund?: { id: string } }>
+  ) {
+    const refundId = effect.output?.refund?.id;
+    if (!refundId) return { reversed: false, reason: 'no refund id in journal output' };
+    return commerceStore.reverseRefund(refundId);
   }
 }
