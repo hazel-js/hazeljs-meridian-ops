@@ -61,7 +61,7 @@ flowchart TB
   Desk -.-> Safe
 ```
 
-![Meridian tour flow](./docs/assets/meridian-tour.svg)
+![Meridian tour flow](docs/assets/meridian-tour.svg)
 
 ## Quick start
 
