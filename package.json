@@ -28,19 +28,24 @@
     "postinstall": "prisma generate || true"
   },
   "dependencies": {
-    "@hazeljs/agent": "2.0.9",
-    "@hazeljs/agent-gatekeeper": "2.0.9",
-    "@hazeljs/agent-vm": "2.0.9",
-    "@hazeljs/core": "2.0.9",
-    "@hazeljs/decision": "2.0.9",
-    "@hazeljs/eval": "2.0.9",
-    "@hazeljs/flow": "2.0.9",
-    "@hazeljs/inspector": "2.0.9",
-    "@hazeljs/mcp": "2.0.9",
-    "@hazeljs/skillgate": "2.0.9",
-    "@hazeljs/swagger": "2.0.9",
-    "@hazeljs/testing": "2.0.9",
-    "@prisma/client": "^6.19.3"
+    "@hazeljs/agent": "2.0.10",
+    "@hazeljs/agent-gatekeeper": "2.0.10",
+    "@hazeljs/agent-vm": "2.0.10",
+    "@hazeljs/core": "2.0.10",
+    "@hazeljs/decision": "2.0.10",
+    "@hazeljs/eval": "2.0.10",
+    "@hazeljs/flow": "2.0.10",
+    "@hazeljs/inspector": "2.0.10",
+    "@hazeljs/mcp": "2.0.10",
+    "@hazeljs/prompts": "^2.0.10",
+    "@hazeljs/skillgate": "2.0.10",
+    "@hazeljs/swagger": "2.0.10",
+    "@hazeljs/testing": "2.0.10",
+    "@prisma/client": "^6.19.3",
+    "openai": "^6.42.0"
+  },
+  "overrides": {
+    "openai": "^6.42.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

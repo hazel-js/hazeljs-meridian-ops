@@ -10,9 +10,9 @@
     "context": "ts-node --project tsconfig.json --transpile-only context-auto-agent/index.ts"
   },
   "dependencies": {
-    "@hazeljs/cag": "file:../../hazeljs/packages/cag",
-    "@hazeljs/context": "file:../../hazeljs/packages/context",
-    "@hazeljs/kag": "file:../../hazeljs/packages/kag"
+    "@hazeljs/cag": "2.0.10",
+    "@hazeljs/context": "2.0.10",
+    "@hazeljs/kag": "2.0.10"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
