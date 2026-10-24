@@ -1,0 +1,22 @@
+{
+  "name": "meridian-context-labs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline CAG / KAG / Context labs for Meridian Ops",
+  "scripts": {
+    "rag": "ts-node --project tsconfig.json --transpile-only rag-helpdesk-agent/index.ts",
+    "cag": "ts-node --project tsconfig.json --transpile-only cag-support-agent/index.ts",
+    "kag": "ts-node --project tsconfig.json --transpile-only kag-commerce-agent/index.ts",
+    "context": "ts-node --project tsconfig.json --transpile-only context-auto-agent/index.ts"
+  },
+  "dependencies": {
+    "@hazeljs/cag": "file:../../hazeljs/packages/cag",
+    "@hazeljs/context": "file:../../hazeljs/packages/context",
+    "@hazeljs/kag": "file:../../hazeljs/packages/kag"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

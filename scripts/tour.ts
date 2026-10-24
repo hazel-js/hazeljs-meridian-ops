@@ -37,7 +37,7 @@ for (const f of FEATURES) {
   console.log(`     try: ${f.try}\n`);
 }
 
-console.log('Phase 6 (optional): Agent VM · SQL durable · RAG helpdesk · Flow peer · k8s dry-run — see TOUR.md\n');
+console.log('Always on: RAG helpdesk · Decision Runtime. Optional: Agent VM · SQL durable · Flow peer · k8s dry-run — see TOUR.md\n');
 
 console.log(`Sample curls (server on :${PORT}):\n`);
 console.log(`curl -s ${base}/api/support/chat -H 'content-type: application/json' -d '{"message":"Where is ORD-1001?"}'`);

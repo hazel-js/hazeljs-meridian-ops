@@ -150,13 +150,15 @@ npm run db:push
 # Repeat HITL refund; runs persist in SQLite instead of .hazel/runs/
 ```
 
-### B. RAG helpdesk
+### B. RAG helpdesk (always registered — not opt-in)
 
 ```bash
 curl -s localhost:3060/api/helpdesk/chat \
   -H 'content-type: application/json' \
   -d '{"message":"What is the refund SLA?"}' | jq '{agent, response, steps}'
 ```
+
+Offline CAG / KAG / Context labs (no HTTP server): `npm run example:install` then `example:rag` · `example:cag` · `example:kag` · `example:context`. See [examples/](./examples/).
 
 ### C. Flow HITL peer (refund saga bridge)
 

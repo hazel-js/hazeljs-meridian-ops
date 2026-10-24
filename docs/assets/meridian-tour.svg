@@ -29,7 +29,7 @@
 
   <rect class="box g1" x="24" y="56" width="140" height="72" rx="6"/>
   <text x="40" y="88" class="label">1 · store:sync</text>
-  <text x="40" y="108" class="sub">DNA ’ lock</text>
+  <text x="40" y="108" class="sub">DNA ? lock</text>
 
   <path class="arrow march" d="M172 92 H210"/>
 
@@ -49,6 +49,6 @@
   <text x="618" y="88" class="label">4 · HITL</text>
   <text x="618" y="108" class="sub">approve</text>
 
-  <text x="24" y="170" class="sub">Not this: hazel agent run stubs · apply ` restart Node · K8s dry-run is appendix only</text>
-  <text x="24" y="192" class="sub">Phase 6 opt-in: SQL durable · RAG helpdesk · Flow peer · remote registry · k8s dry-run</text>
+  <text x="24" y="170" class="sub">Always on: six agents · Gatekeeper · Decision · RAG helpdesk · Inspector. HITL pauses when AGENT_OS_HITL=1.</text>
+  <text x="24" y="192" class="sub">Not this: hazel agent run stubs · apply ? restart Node. CAG/KAG/Context are offline examples/, not /api.</text>
 </svg>

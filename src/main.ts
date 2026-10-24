@@ -26,12 +26,13 @@ async function bootstrap() {
 │                                                                    │
 │  POST /api/chat              ops-router (default door)             │
 │  POST /api/support/chat      support-desk + contract               │
+│  POST /api/helpdesk/chat     RAG policy helpdesk                   │
 │  POST /api/ops/chat          api-concierge (Skillgate)             │
 │  POST /api/fraud/chat        fraud-triage (HITL freeze)            │
+│  POST /api/decision/refund   closed-set judgment → HITL           │
 │  GET  /api/skillgate/report  include / deny skills                 │
 │  GET  /api/gatekeeper/status policies + mode                       │
-│  GET  /api/agent-vm/status     effect typing (AGENT_OS_AGENT_VM=1) │
-│  POST /api/agent-vm/speculate/travel  branch speculation lab       │
+│  GET  /api/agent-vm/status   effect typing (AGENT_OS_AGENT_VM=1)   │
 │  GET  /__hazel               Inspector                             │
 │                                                                    │
 │  npm run store:sync | platform:sync | tour                         │
