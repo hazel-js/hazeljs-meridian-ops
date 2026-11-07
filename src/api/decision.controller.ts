@@ -1,5 +1,6 @@
 /**
- * Teaching API for Decision Runtime — closed-set refund choose → HITL → Gatekeeper execute.
+ * Teaching API for Decision Runtime + Decision Plane.
+ * Runtime: closed-set refund → HITL → Gatekeeper. Plane: finite harness-neutral answers.
  */
 
 import { ApiTags, Body, Controller, Get, Param, Post } from '@hazeljs/core';
@@ -8,6 +9,11 @@ import {
   getMeridianDecisionRuntime,
   resumeRefundDecision,
 } from '../decision/meridian-decision';
+import {
+  decideModelRoute,
+  inferRouteContext,
+  MERIDIAN_MODEL_ROUTE,
+} from '../decision/meridian-decision-plane';
 
 @ApiTags('decision')
 @Controller('/api/decision')
@@ -19,8 +25,61 @@ export class DecisionController {
       ready: Boolean(runtime),
       package: '@hazeljs/decision',
       definitions: runtime ? ['refund-approval'] : [],
+      plane: {
+        definitions: [MERIDIAN_MODEL_ROUTE.id],
+        note: 'Decision Plane is advisory finite answers — it does not replace DecisionRuntime or Gatekeeper.',
+      },
       note: 'Confidence informs policy; Gatekeeper authorizes payments.refund. Confidence ≠ permission.',
     };
+  }
+
+  /**
+   * Decision Plane model-route lab. Body: `{ message }` or explicit `{ routine, policyFaq, moneyMove }`.
+   */
+  @Post('/plane/route')
+  async planeRoute(
+    @Body()
+    body: {
+      message?: string;
+      routine?: boolean;
+      policyFaq?: boolean;
+      moneyMove?: boolean;
+      tenantId?: string;
+      actorId?: string;
+    }
+  ) {
+    const context = body?.message?.trim()
+      ? inferRouteContext(body.message.trim())
+      : {
+          routine: Boolean(body?.routine),
+          policyFaq: Boolean(body?.policyFaq),
+          moneyMove: Boolean(body?.moneyMove),
+        };
+
+    try {
+      const result = await decideModelRoute(context, {
+        tenantId: body?.tenantId,
+        actorId: body?.actorId,
+      });
+      return {
+        plane: MERIDIAN_MODEL_ROUTE.id,
+        context,
+        status: result.status,
+        answer: result.status === 'succeeded' ? result.answer : undefined,
+        summary: result.summary,
+        reason: result.status !== 'succeeded' ? result.reason : undefined,
+        confidence: result.confidence,
+        next:
+          result.status === 'succeeded' && result.answer === 'advanced'
+            ? {
+                hint: 'Money-moving intent — use Decision Runtime + Gatekeeper, not Plane alone',
+                refund: 'POST /api/decision/refund',
+              }
+            : undefined,
+      };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
   }
 
   /**

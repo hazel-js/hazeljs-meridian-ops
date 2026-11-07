@@ -2,17 +2,28 @@
   "name": "meridian-context-labs",
   "version": "1.0.0",
   "private": true,
-  "description": "Offline CAG / KAG / Context labs for Meridian Ops",
+  "description": "Offline CAG / KAG / Context / Decision Plane / governed / AI call-contract labs for Meridian Ops",
   "scripts": {
     "rag": "ts-node --project tsconfig.json --transpile-only rag-helpdesk-agent/index.ts",
     "cag": "ts-node --project tsconfig.json --transpile-only cag-support-agent/index.ts",
     "kag": "ts-node --project tsconfig.json --transpile-only kag-commerce-agent/index.ts",
-    "context": "ts-node --project tsconfig.json --transpile-only context-auto-agent/index.ts"
+    "context": "ts-node --project tsconfig.json --transpile-only context-auto-agent/index.ts",
+    "decision-plane": "ts-node --project tsconfig.json --transpile-only decision-plane-agent/index.ts",
+    "governed-runtime": "ts-node --project tsconfig.json --transpile-only governed-runtime-agent/index.ts",
+    "governed-memory": "ts-node --project tsconfig.json --transpile-only governed-memory-agent/index.ts",
+    "ai-call-contract": "ts-node --project tsconfig.json --transpile-only -r reflect-metadata ai-call-contract-agent/index.ts"
   },
   "dependencies": {
-    "@hazeljs/cag": "2.0.10",
-    "@hazeljs/context": "2.0.10",
-    "@hazeljs/kag": "2.0.10"
+    "@hazeljs/agent-gatekeeper": "2.0.14",
+    "@hazeljs/ai": "2.0.14",
+    "@hazeljs/cag": "2.0.14",
+    "@hazeljs/context": "2.0.14",
+    "@hazeljs/decision": "2.0.14",
+    "@hazeljs/eval": "2.0.14",
+    "@hazeljs/kag": "2.0.14",
+    "@hazeljs/memory": "2.0.14",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",

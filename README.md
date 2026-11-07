@@ -2,7 +2,7 @@
 
 **Tagline:** HazelJS Agent OS flagship — ship AI workers as part of your TypeScript backend.
 
-Canonical teaching app for [HazelJS Agent OS](https://hazeljs.ai/agent-os). One Nest-style Hazel process runs **six agents**, **Skillgate**, **Gatekeeper**, **Decision HITL**, **crash-safe refunds**, and a **RAG helpdesk**. DNA + Store + platform manifests sit beside that runtime (versioned like packages, declared like infrastructure). Offline **CAG / KAG / Context** labs live under [`examples/`](./examples/).
+Canonical teaching app for [HazelJS Agent OS](https://hazeljs.ai/agent-os). One Nest-style Hazel process runs **six agents**, **Skillgate**, **Gatekeeper**, **Decision HITL**, **crash-safe refunds**, and a **RAG helpdesk**. DNA + Store + platform manifests sit beside that runtime (versioned like packages, declared like infrastructure). Offline **CAG / KAG / Context / Decision Plane / governed runtime & memory / AI call-contract** labs live under [`examples/`](./examples/).
 
 Not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-os), [Agno AgentOS](https://hazeljs.ai/compare/agno-agentos), or [agentos.sh](https://hazeljs.ai/compare/agentos-sh).
 
@@ -18,7 +18,8 @@ Not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-
 | HITL pauses (refund / freeze) | Demo auto-approves | `AGENT_OS_HITL=1` |
 | Agent VM (effect types, speculate, undo) | — | `AGENT_OS_AGENT_VM=1` |
 | SQL durable runs | File store default | `AGENT_OS_DURABLE_BACKEND=sql` |
-| CAG / KAG / unified Context | — | `npm run example:*` (no HTTP server) |
+| Decision Plane (model-route) | Yes (`POST /api/decision/plane/route`) | Offline: `npm run example:decision-plane` |
+| CAG / KAG / Context / governed / AI call-contract | — | `npm run example:*` (no HTTP server) |
 
 ```mermaid
 flowchart TB
@@ -113,7 +114,8 @@ Full walkthrough: [TOUR.md](./TOUR.md).
 | POST | `/api/approvals/:id/approve` · `/reject` | Resume Gatekeeper HITL |
 | POST | `/api/decision/refund` | Closed-set refund judgment (always Decision HITL) |
 | POST | `/api/decision/refund/:id/resume` | Override → Gatekeeper `payments.refund` |
-| GET | `/api/decision/status` | Decision runtime ready? |
+| POST | `/api/decision/plane/route` | Decision Plane advisory route (`fast` / `balanced` / `advanced` / `abstain`) |
+| GET | `/api/decision/status` | Decision runtime + plane ready? |
 | GET | `/api/skillgate/report?json=1` | Include / deny skills |
 | GET | `/api/gatekeeper/status` | Policies + mode |
 | GET | `/api/agent-vm/status` | Effect typing (off until `AGENT_OS_AGENT_VM=1`) |
@@ -145,6 +147,13 @@ DNA packages: `dna/*.marketplace.json` — six marketplace packages after `store
 **DNA:** `support-desk` declares `decisions.refund-approval`.  
 **Not this:** Agent Office UI lives in [hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) at `/office/decisions` — not in Meridian or Inspector.
 
+## Feature: Decision Plane (advisory routing)
+
+**Problem:** Harnesses need a finite answer (which desk / model tier) without treating model confidence as authorization.  
+**How Meridian does it:** `createDecisionPlane` + rules provider on `meridian.model-route` (`fast` / `balanced` / `advanced` / `abstain`). Plane does **not** replace DecisionRuntime or Gatekeeper.  
+**Try:** `POST /api/decision/plane/route` with `{"message":"Where is ORD-1001?"}` or `npm run example:decision-plane`.  
+**Not this:** Money movement still goes through Decision Runtime + Gatekeeper.
+
 ## Feature: HITL refunds
 
 **Problem:** Auto-refunds lose money when the model is wrong or the process restarts.  
@@ -175,15 +184,16 @@ DNA packages: `dna/*.marketplace.json` — six marketplace packages after `store
 
 ---
 
-## Context labs (RAG / CAG / KAG / Context)
+## Context & governance labs
 
-The **live server** wires RAG on `helpdesk`. **CAG, KAG, and `@hazeljs/context` are not injected into AgentRuntime here** — they are offline TypeScript labs (no API keys, no `npm run dev`).
+The **live server** wires RAG on `helpdesk` and Decision Plane on `/api/decision/plane/route`. **CAG, KAG, Context, governed runtime/memory, and the AI call contract** are offline TypeScript labs (no API keys).
 
 ```mermaid
 flowchart LR
   subgraph live [Live app]
     Q1[Policy question] --> HD[helpdesk]
     HD --> RAG[In-memory RAG KB]
+    Q3[Route message] --> Plane[Decision Plane]
   end
 
   subgraph labs [examples/ — npm run example:*]
@@ -192,18 +202,28 @@ flowchart LR
     Planner --> RAG2[RAG handbook]
     Planner --> KAG[KAG graph]
     Planner --> Mem[Memory]
+    GR[createGovernedRuntime]
+    GM[GovernedMemoryService]
+    AI["@hazeljs/ai call contract"]
   end
 ```
 
 ```bash
+# Sibling packages use file:../hazeljs — build once if needed:
+# cd ../hazeljs && npx tsc -b packages/ai packages/decision packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag
+
 npm run example:install
-npm run example:rag      # handbook retrieval (mirrors helpdesk KB)
-npm run example:cag      # cached policy + tenant isolation
-npm run example:kag      # settlement evidence path
-npm run example:context  # auto planner over all four
+npm run example:rag              # handbook retrieval (mirrors helpdesk KB)
+npm run example:cag              # cached policy + tenant isolation
+npm run example:kag              # settlement evidence path
+npm run example:context          # auto planner over all four
+npm run example:decision-plane   # finite route answers
+npm run example:governed-runtime # Gatekeeper HITL + ledger outside AgentRuntime
+npm run example:governed-memory  # capture / accept / forget
+npm run example:ai-call-contract # FakeModel + @AgentTool + durable HITL + goldens
 ```
 
-Details: [examples/README.md](./examples/README.md) · post: [RAG vs CAG vs KAG](https://hazeljs.ai/blog/rag-vs-cag-vs-kag).
+Details: [examples/README.md](./examples/README.md) · post: [RAG vs CAG vs KAG](https://hazeljs.ai/blog/rag-vs-cag-vs-kag) · [AI call contract](https://hazeljs.ai/blog/hazeljs-ai-call-contract-agent-os-governance).
 
 ---
 
@@ -222,6 +242,8 @@ DNA and the platform control plane sit **beside** that runtime. They answer diff
 | **Runtime** (`POST /api/chat`) | What happens *right now*? (steps, HITL, timeline) |
 | **Gatekeeper** (`@hazeljs/agent-gatekeeper`) | May this agent call this tool *now*? (default deny, HITL, audit) |
 | **Decision** (`@hazeljs/decision`) | Which closed-set *judgment* before a side effect? |
+| **Decision Plane** (`createDecisionPlane`) | Which finite *advisory* answer (route / tier) — not authorization? |
+| **Governed runtime** (`createGovernedRuntime`) | How do external harnesses mediate tools via Gatekeeper? |
 | **Agent VM** (`@hazeljs/agent-vm`, opt-in) | What *effect class* is this tool? Can we speculate and undo? |
 
 **DNA ≠ implementation.** DNA lists tool *names* and policies; real side effects stay in TypeScript. Overlay never replaces `@Tool` handlers with empty stubs.
@@ -300,7 +322,7 @@ Skip on first pass. Details: [TOUR.md](./TOUR.md#phase-6-labs-optional--skip-on-
 | `hazel agent reconcile` | N/A | Converge local backend |
 | `npm run store:sync` | N/A | Publish DNA + lockfile |
 | `npm run dev` + `/api/chat` | Yes | Product behavior |
-| `npm run example:cag` (etc.) | N/A | Offline context labs — not the HTTP app |
+| `npm run example:cag` / `decision-plane` / `governed-*` / `ai-call-contract` | N/A | Offline labs — not the HTTP app (Plane has a live twin at `/api/decision/plane/route`) |
 | `npm run mcp` | Yes (HTTP to API) | IDE tools |
 | `hazel store … --remote` | N/A | Optional Cloud registry |
 

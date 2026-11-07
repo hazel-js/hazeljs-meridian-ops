@@ -62,6 +62,20 @@ curl -s -X POST "localhost:3060/api/decision/refund/$(echo "$DEC" | jq -r .decis
 
 Lab UI for compare/flow/history is [hazeljs-agent-office](https://github.com/hazel-js/hazeljs-agent-office) `/office/decisions` — not Meridian Inspector.
 
+## 4c. Decision Plane route (advisory — not authorization)
+
+```bash
+curl -s localhost:3060/api/decision/plane/route \
+  -H 'content-type: application/json' \
+  -d '{"message":"Where is ORD-1001?"}' | jq '{status, answer, summary}'
+
+curl -s localhost:3060/api/decision/plane/route \
+  -H 'content-type: application/json' \
+  -d '{"message":"I want a refund for ORD-1001"}' | jq '{status, answer, next}'
+```
+
+Offline twin: `npm run example:decision-plane`. Plane answers are finite labels — Gatekeeper still authorizes tools.
+
 ## 5. Fraud freeze (F12 partial)
 
 ```bash
@@ -158,7 +172,15 @@ curl -s localhost:3060/api/helpdesk/chat \
   -d '{"message":"What is the refund SLA?"}' | jq '{agent, response, steps}'
 ```
 
-Offline CAG / KAG / Context labs (no HTTP server): `npm run example:install` then `example:rag` · `example:cag` · `example:kag` · `example:context`. See [examples/](./examples/).
+Offline labs (no HTTP server): `npm run example:install` then `example:rag` · `example:cag` · `example:kag` · `example:context` · `example:decision-plane` · `example:governed-runtime` · `example:governed-memory` · `example:ai-call-contract`. See [examples/](./examples/).
+
+Build sibling packages first when using `file:../hazeljs` deps:
+
+```bash
+cd ../hazeljs
+npx tsc -b packages/ai packages/decision packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag packages/agent packages/core
+cd ../hazeljs-meridian-ops && npm install && npm run example:install
+```
 
 ### C. Flow HITL peer (refund saga bridge)
 
