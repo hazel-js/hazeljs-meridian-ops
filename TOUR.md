@@ -76,6 +76,27 @@ curl -s localhost:3060/api/decision/plane/route \
 
 Offline twin: `npm run example:decision-plane`. Plane answers are finite labels — Gatekeeper still authorizes tools.
 
+## 4d. Autonomous Runtime carrier switch (ordinary service — not @Agent)
+
+```bash
+curl -s localhost:3060/api/autonomous/status | jq .
+
+# Observe carrier.failed → approval-required parks shipping.switch
+AAR=$(curl -s localhost:3060/api/autonomous/carrier-failed \
+  -H 'content-type: application/json' \
+  -d '{"orderId":"ORD-1001","carrier":"UPS"}')
+echo "$AAR" | jq '{runId, phase, decision, next}'
+
+# Approve → Gatekeeper + commerceStore.switchCarrier (FedEx)
+curl -s -X POST "localhost:3060/api/autonomous/runs/$(echo "$AAR" | jq -r .runId)/resume" \
+  -H 'content-type: application/json' \
+  -d '{"approved":true,"actor":"ops-lead"}' | jq '{status, phase, output}'
+
+curl -s "localhost:3060/api/autonomous/runs/$(echo "$AAR" | jq -r .runId)/timeline" | jq .
+```
+
+Offline twin: `npm run example:autonomous`. Observation ≠ Decision ≠ Authorization ≠ Execution.
+
 ## 5. Fraud freeze (F12 partial)
 
 ```bash
@@ -172,13 +193,13 @@ curl -s localhost:3060/api/helpdesk/chat \
   -d '{"message":"What is the refund SLA?"}' | jq '{agent, response, steps}'
 ```
 
-Offline labs (no HTTP server): `npm run example:install` then `example:rag` · `example:cag` · `example:kag` · `example:context` · `example:decision-plane` · `example:governed-runtime` · `example:governed-memory` · `example:ai-call-contract`. See [examples/](./examples/).
+Offline labs (no HTTP server): `npm run example:install` then `example:rag` · `example:cag` · `example:kag` · `example:context` · `example:decision-plane` · `example:governed-runtime` · `example:governed-memory` · `example:ai-call-contract` · `example:autonomous`. See [examples/](./examples/).
 
 Build sibling packages first when using `file:../hazeljs` deps:
 
 ```bash
 cd ../hazeljs
-npx tsc -b packages/ai packages/decision packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag packages/agent packages/core
+npx tsc -b packages/ai packages/decision packages/autonomous packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag packages/agent packages/core
 cd ../hazeljs-meridian-ops && npm install && npm run example:install
 ```
 

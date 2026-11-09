@@ -160,6 +160,37 @@ export const commerceStore = {
     return [...refunds];
   },
 
+  /**
+   * Switch shipping carrier after primary failure (AAR shipping.switch capability).
+   * Idempotent on the same orderId + candidate.
+   */
+  switchCarrier(
+    orderId: string,
+    candidate: string,
+    additionalCost = 0
+  ):
+    | { switched: true; orderId: string; previousCarrier?: string; newCarrier: string; additionalCost: number }
+    | { error: string } {
+    const order = this.getOrder(orderId);
+    if (!order) return { error: `No order ${orderId}` };
+    if (order.status === 'cancelled' || order.status === 'refunded') {
+      return { error: `Order ${order.id} is ${order.status} — cannot switch carrier` };
+    }
+    const previous = order.carrier;
+    order.carrier = candidate;
+    if (!order.trackingNumber) {
+      order.trackingNumber = `SW-${candidate.toUpperCase()}-${order.id}`;
+    }
+    if (order.status === 'pending') order.status = 'shipped';
+    return {
+      switched: true,
+      orderId: order.id,
+      previousCarrier: previous,
+      newCarrier: candidate,
+      additionalCost,
+    };
+  },
+
   /** Undo a committed refund — used by @Compensate on processRefund when Agent VM rolls back. */
   reverseRefund(refundId: string) {
     const idx = refunds.findIndex((r) => r.id === refundId);

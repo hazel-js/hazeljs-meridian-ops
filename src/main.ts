@@ -30,6 +30,7 @@ async function bootstrap() {
 │  POST /api/ops/chat          api-concierge (Skillgate)             │
 │  POST /api/fraud/chat        fraud-triage (HITL freeze)            │
 │  POST /api/decision/refund   closed-set judgment → HITL           │
+│  POST /api/autonomous/…      AAR carrier fail → approve → switch  │
 │  GET  /api/skillgate/report  include / deny skills                 │
 │  GET  /api/gatekeeper/status policies + mode                       │
 │  GET  /api/agent-vm/status   effect typing (AGENT_OS_AGENT_VM=1)   │

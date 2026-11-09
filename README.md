@@ -2,7 +2,7 @@
 
 **Tagline:** HazelJS Agent OS flagship — ship AI workers as part of your TypeScript backend.
 
-Canonical teaching app for [HazelJS Agent OS](https://hazeljs.ai/agent-os). One Nest-style Hazel process runs **six agents**, **Skillgate**, **Gatekeeper**, **Decision HITL**, **crash-safe refunds**, and a **RAG helpdesk**. DNA + Store + platform manifests sit beside that runtime (versioned like packages, declared like infrastructure). Offline **CAG / KAG / Context / Decision Plane / governed runtime & memory / AI call-contract** labs live under [`examples/`](./examples/).
+Canonical teaching app for [HazelJS Agent OS](https://hazeljs.ai/agent-os). One Nest-style Hazel process runs **six agents**, **Skillgate**, **Gatekeeper**, **Decision HITL**, **Autonomous Runtime (AAR)**, **crash-safe refunds**, and a **RAG helpdesk**. DNA + Store + platform manifests sit beside that runtime (versioned like packages, declared like infrastructure). Offline **CAG / KAG / Context / Decision Plane / governed runtime & memory / AI call-contract / AAR** labs live under [`examples/`](./examples/).
 
 Not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-os), [Agno AgentOS](https://hazeljs.ai/compare/agno-agentos), or [agentos.sh](https://hazeljs.ai/compare/agentos-sh).
 
@@ -13,13 +13,14 @@ Not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-
 | Commerce agents + real `@Tool` handlers | Yes | — |
 | Gatekeeper (default deny) + DNA overlay | Yes | `AGENT_OS_GATEKEEPER=0` / `AGENT_OS_DNA_OVERLAY=0` |
 | Decision Runtime refunds | Yes (`/api/decision/*`) | — |
+| Autonomous Runtime (carrier switch) | Yes (`/api/autonomous/*`) | Offline: `npm run example:autonomous` |
 | RAG helpdesk (in-memory KB) | Yes (`POST /api/helpdesk/chat`) | — |
 | Inspector UI | Yes (`http://localhost:3060/__hazel`) | — |
 | HITL pauses (refund / freeze) | Demo auto-approves | `AGENT_OS_HITL=1` |
 | Agent VM (effect types, speculate, undo) | — | `AGENT_OS_AGENT_VM=1` |
 | SQL durable runs | File store default | `AGENT_OS_DURABLE_BACKEND=sql` |
 | Decision Plane (model-route) | Yes (`POST /api/decision/plane/route`) | Offline: `npm run example:decision-plane` |
-| CAG / KAG / Context / governed / AI call-contract | — | `npm run example:*` (no HTTP server) |
+| CAG / KAG / Context / governed / AI call-contract / AAR | — | `npm run example:*` (no HTTP server) |
 
 ```mermaid
 flowchart TB
@@ -30,6 +31,7 @@ flowchart TB
     Ops["/api/ops/chat"]
     Fraud["/api/fraud/chat"]
     Decision["/api/decision/refund"]
+    AAR["/api/autonomous/carrier-failed"]
     REST["REST /api/orders · refunds · tickets"]
   end
 
@@ -42,6 +44,7 @@ flowchart TB
     FraudA[fraud-triage]
     HD[helpdesk + RAG KB]
     DecRT["@hazeljs/decision"]
+    AarRT["@hazeljs/autonomous"]
   end
 
   Chat --> Router
@@ -51,6 +54,8 @@ flowchart TB
   Fraud --> FraudA
   Decision --> DecRT
   DecRT --> GK
+  AAR --> AarRT
+  AarRT --> GK
   Router --> Desk
   Router --> FraudA
   Router --> Concierge
@@ -77,7 +82,7 @@ npm run dev             # http://localhost:3060
 
 Leave `OPENAI_API_KEY` empty (DemoLLM — no paid key). Set `AGENT_OS_HITL=1` for real approval pauses.
 
-Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforce · deny · …` + `Decision Runtime: refund-approval`.
+Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforce · deny · …` + `Decision Runtime: refund-approval` + `Autonomous Runtime: order-operations`.
 
 Open Inspector at [http://localhost:3060/__hazel](http://localhost:3060/__hazel).
 
@@ -116,6 +121,10 @@ Full walkthrough: [TOUR.md](./TOUR.md).
 | POST | `/api/decision/refund/:id/resume` | Override → Gatekeeper `payments.refund` |
 | POST | `/api/decision/plane/route` | Decision Plane advisory route (`fast` / `balanced` / `advanced` / `abstain`) |
 | GET | `/api/decision/status` | Decision runtime + plane ready? |
+| POST | `/api/autonomous/carrier-failed` | AAR observe → approval-pending (shipping.switch) |
+| POST | `/api/autonomous/runs/:id/resume` | Approve / reject AAR capability |
+| GET | `/api/autonomous/runs/:id` · `/timeline` | Inspect AAR run |
+| GET | `/api/autonomous/status` | AAR services + grants ready? |
 | GET | `/api/skillgate/report?json=1` | Include / deny skills |
 | GET | `/api/gatekeeper/status` | Policies + mode |
 | GET | `/api/agent-vm/status` | Effect typing (off until `AGENT_OS_AGENT_VM=1`) |

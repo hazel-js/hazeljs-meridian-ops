@@ -9,6 +9,7 @@ HTTP /api/chat · /api/support/chat · /api/helpdesk/chat · /api/ops/chat · /a
     → AgentRuntime
         → Agent Gatekeeper (authorize every tool call — default deny)
         → Decision Runtime (/api/decision/refund — closed-set + HITL, then Gatekeeper)
+        → Autonomous Runtime (/api/autonomous/* — @Injectable order-ops, then Gatekeeper)
         → Agent VM EffectGate (optional — effect lattice + journal)
         → ops-router (@Delegate) → specialists
         → support-desk / fraud-triage (@Tool in app code)
@@ -48,6 +49,7 @@ Context labs (not in AgentRuntime)
 - **Gatekeeper** (`@hazeljs/agent-gatekeeper`) authorizes each tool invocation (default deny). In-memory audit/approvals are tests-only; Meridian uses durable HITL + console audit, optional Redis.
 - **Agent VM** (`@hazeljs/agent-vm`, `AGENT_OS_AGENT_VM=1`) enforces effect types on tools, journals reversible side effects, and exposes a travel speculation lab. Support-desk `lookupOrder`/`trackShipment` are `@Read`; `processRefund` is `@Reversible` with `@Compensate`.
 - **Decision** (`@hazeljs/decision`) chooses `approve | reject | review` then Gatekeeper executes; confidence ≠ permission.
+- **Autonomous** (`@hazeljs/autonomous`) governs ordinary `@Injectable` services (`@Autonomous` / `@Observe` / `@Capability`) — observe → decide → HITL → Gatekeeper → capability. Not a second `@Agent` loop.
 - **Overlay** bridges platform/file DNA → live prompt/policies on boot (`AGENT_OS_DNA_OVERLAY`).
 - **RAG helpdesk** is live (`POST /api/helpdesk/chat`). CAG / KAG / `@hazeljs/context` are offline labs under `examples/` — not injected on AgentRuntime.
 
@@ -63,4 +65,5 @@ Local registry + local backend are enough for correctness. Hosted registry (`HAZ
 | Flow HITL peer | `AGENT_OS_FLOW_PEER=1` |
 | Agent VM | `AGENT_OS_AGENT_VM=1` + `/api/agent-vm/*` |
 | Context labs | `npm run example:rag` · `example:cag` · `example:kag` · `example:context` |
+| Autonomous lab | `npm run example:autonomous` (live twin: `/api/autonomous/*`) |
 | K8s dry-run | `npm run platform:k8s-dryrun` (`runtimeClassName: kubernetes`) |

@@ -12,10 +12,11 @@ Offline TypeScript demos. No API keys unless noted.
 | [`governed-runtime-agent`](./governed-runtime-agent) | `npm run example:governed-runtime` | `createGovernedRuntime` HITL + ledger idempotency (no AgentRuntime) |
 | [`governed-memory-agent`](./governed-memory-agent) | `npm run example:governed-memory` | capture → accept → retrieve → forget (tenant-scoped) |
 | [`ai-call-contract-agent`](./ai-call-contract-agent) | `npm run example:ai-call-contract` | `@AgentTool`, GatekeeperApprovalPort suspend/resume, `runAiGolden` |
+| [`autonomous-order-ops`](./autonomous-order-ops) | `npm run example:autonomous` | AAR observe → approve → `shipping.switch` (not `@Agent`) |
 
 ```bash
 # from hazeljs-meridian-ops/ — build sibling packages once if using file: deps
-cd ../hazeljs && npx tsc -b packages/ai packages/decision packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag
+cd ../hazeljs && npx tsc -b packages/ai packages/decision packages/autonomous packages/agent-gatekeeper packages/memory packages/eval packages/context packages/cag packages/kag
 cd ../hazeljs-meridian-ops
 npm run example:install
 npm run example:rag
@@ -26,6 +27,7 @@ npm run example:decision-plane
 npm run example:governed-runtime
 npm run example:governed-memory
 npm run example:ai-call-contract
+npm run example:autonomous
 ```
 
 Live twins after `npm run dev`:
@@ -33,3 +35,4 @@ Live twins after `npm run dev`:
 - RAG helpdesk → `POST /api/helpdesk/chat`
 - Decision Plane route → `POST /api/decision/plane/route`
 - Decision Runtime refund → `POST /api/decision/refund`
+- Autonomous carrier switch → `POST /api/autonomous/carrier-failed`

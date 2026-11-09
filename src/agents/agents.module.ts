@@ -48,7 +48,9 @@ import {
   type MeridianAgentVmBundle,
 } from '../agent-vm';
 import { createMeridianDecisionRuntime } from '../decision/meridian-decision';
+import { createMeridianAutonomousRuntime } from '../autonomous/meridian-autonomous';
 import { DecisionController } from '../api/decision.controller';
+import { AutonomousController } from '../api/autonomous.controller';
 
 export const supportContract: AgentContract = {
   name: 'support-desk-slo',
@@ -113,6 +115,15 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
     gatekeeper: gatekeeper.enabled ? gatekeeper.gatekeeper : undefined,
     checkpoints: durable.checkpointService,
     humanTasks: durable.humanTaskService,
+  });
+
+  const aar = createMeridianAutonomousRuntime({
+    gatekeeper: gatekeeper.enabled ? gatekeeper.gatekeeper : undefined,
+  });
+  void aar.start().then(() => {
+    if (process.env.JEST_WORKER_ID === undefined) {
+      console.log('Autonomous Runtime: order-operations (POST /api/autonomous/carrier-failed)');
+    }
   });
 
   if (process.env.JEST_WORKER_ID === undefined) {
@@ -225,7 +236,7 @@ export class MeridianBootstrap {
     HelpdeskAgent,
     MeridianBootstrap,
   ],
-  controllers: [DecisionController],
+  controllers: [DecisionController, AutonomousController],
   exports: [AgentModule],
 })
 export class AgentsModule {}

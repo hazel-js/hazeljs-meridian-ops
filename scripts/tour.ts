@@ -15,6 +15,7 @@ const FEATURES: Array<{ id: string; name: string; try: string }> = [
   { id: 'F7', name: 'HITL / durable suspend', try: 'AGENT_OS_HITL=1 + approvals API' },
   { id: 'F8', name: 'Policies / Gatekeeper', try: 'GET /api/gatekeeper/status · processRefund require_approval' },
   { id: 'F8b', name: 'Agent VM (optional)', try: 'AGENT_OS_AGENT_VM=1 · POST /api/agent-vm/speculate/travel' },
+  { id: 'F8c', name: 'Autonomous Runtime', try: 'POST /api/autonomous/carrier-failed → resume' },
   { id: 'F9', name: 'Contracts + fallback', try: 'support-desk → safe-desk' },
   { id: 'F10', name: 'Digital twin / canary', try: '{"canary":true} on support chat' },
   { id: 'F11', name: 'Multiple DNA', try: '6 packages in lock after store:sync' },
@@ -37,7 +38,9 @@ for (const f of FEATURES) {
   console.log(`     try: ${f.try}\n`);
 }
 
-console.log('Always on: RAG helpdesk · Decision Runtime. Optional: Agent VM · SQL durable · Flow peer · k8s dry-run — see TOUR.md\n');
+console.log(
+  'Always on: RAG helpdesk · Decision Runtime · Autonomous Runtime. Optional: Agent VM · SQL durable · Flow peer · k8s dry-run — see TOUR.md\n'
+);
 
 console.log(`Sample curls (server on :${PORT}):\n`);
 console.log(`curl -s ${base}/api/support/chat -H 'content-type: application/json' -d '{"message":"Where is ORD-1001?"}'`);
