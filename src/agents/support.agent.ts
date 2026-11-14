@@ -1,5 +1,7 @@
 /**
  * WHY: Primary CX agent — DNA declares tools/policies; real handlers live here.
+ * Prompt/policies for this agent come from store/platform boot overlay (not decorator DNA).
+ * Contrast: safe-desk uses @Agent({ dna: true }). See README “Two DNA apply paths”.
  */
 
 import { Service } from '@hazeljs/core';

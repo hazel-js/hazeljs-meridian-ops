@@ -11,6 +11,8 @@ npm run platform:sync
 npm run tour
 ```
 
+This prepares the **store/platform overlay** path (fleet agents). **`safe-desk`** also uses **decorator DNA** (`@Agent({ dna: true })` → `dna/safe-desk.dna.json`) and does not need sync for its prompt — see [README — two DNA paths](./README.md#two-dna-apply-paths-keep-both).
+
 ## 2. Start the app (1 min)
 
 ```bash
@@ -18,7 +20,7 @@ npm run dev
 # open http://localhost:3060/__hazel
 ```
 
-Boot log should show Skillgate report + `DNA overlay: …` + `Gatekeeper: enforce · deny · …` (+ `Agent VM: on` when enabled).
+Boot log should show Skillgate report + `DNA overlay: …` (fleet) + `Gatekeeper: enforce · deny · …` (+ `Agent VM: on` when enabled). `safe-desk` DNA is applied earlier on agent register.
 
 ## 3. Track an order (F1–F2)
 

@@ -1,5 +1,7 @@
 /**
  * WHY: Contract fallback / twin — read-only, no writes.
+ * Prompt/description load from dna/safe-desk.dna.json via `@Agent({ dna: true })`
+ * (decorator DNA path). Other Meridian agents still use store/platform overlay.
  */
 
 import { Service } from '@hazeljs/core';
@@ -8,9 +10,8 @@ import { commerceStore } from '../data/commerce.store';
 
 @Agent({
   name: 'safe-desk',
-  description: 'Conservative fallback support agent — lookup only, no refunds.',
-  systemPrompt: `You are a safe fallback support agent. Only look up order status.
-Never promise refunds. If the customer needs a refund, tell them a specialist will follow up within 1 business day.`,
+  /** Loads `{projectRoot}/dna/safe-desk.dna.json` on registerAgentInstance. */
+  dna: true,
   maxSteps: 4,
   temperature: 0.1,
 })

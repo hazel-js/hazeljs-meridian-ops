@@ -57,8 +57,8 @@ export const PACKAGES = [
       name: 'safe-desk',
       description: 'Conservative fallback support agent — lookup only, no refunds.',
       systemPrompt:
-        'You are a safe fallback support agent. Only look up order status. Never promise refunds.',
-      tools: [{ name: 'lookupOrder', description: 'Look up order' }],
+        'You are a safe fallback support agent. Only look up order status.\nNever promise refunds. If the customer needs a refund, tell them a specialist will follow up within 1 business day.',
+      tools: [{ name: 'lookupOrder', description: 'Look up an order by ID.' }],
       exportedAt: '2026-08-07T12:00:00.000Z',
     },
     { keywords: ['fallback', 'twin'] }

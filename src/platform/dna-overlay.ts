@@ -1,5 +1,10 @@
 /**
  * Overlay local control-plane DNA onto the live AgentRuntime (prompt/model/policies only).
+ *
+ * This is the **store/platform** apply path (fleet). It does not replace decorator DNA:
+ * `safe-desk` already loads `dna/safe-desk.dna.json` via `@Agent({ dna: true })` on register.
+ * Overlay can still re-apply marketplace/platform DNA for agents that appear in the store.
+ * See README — “Two DNA apply paths”.
  */
 
 import {

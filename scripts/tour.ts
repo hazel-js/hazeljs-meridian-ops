@@ -9,6 +9,11 @@ const FEATURES: Array<{ id: string; name: string; try: string }> = [
   { id: 'F1', name: 'AgentRuntime execute', try: `POST ${base}/api/chat` },
   { id: 'F2', name: 'Real @Tool handlers', try: `POST ${base}/api/support/chat — ORD-1001` },
   { id: 'F3', name: 'DNA as contract', try: 'dna/*.marketplace.json' },
+  {
+    id: 'F3b',
+    name: 'Decorator DNA (safe-desk)',
+    try: '@Agent({ dna: true }) → dna/safe-desk.dna.json · jest tests/safe-desk-decorator-dna.test.ts',
+  },
   { id: 'F4', name: 'Local registry + Store', try: 'npm run store:sync' },
   { id: 'F5', name: 'Project materialize', try: '.hazel/agents/lock.json' },
   { id: 'F6', name: 'CLI smoke vs prod', try: 'npm run demo:smoke-cli' },

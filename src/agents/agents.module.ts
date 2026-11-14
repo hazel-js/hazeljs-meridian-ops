@@ -1,5 +1,12 @@
 /**
- * WHY: One AgentRuntime for all Meridian specialists + Skillgate + DNA overlay.
+ * WHY: One AgentRuntime for all Meridian specialists + Skillgate + DNA.
+ *
+ * DNA apply paths (both intentional — see README “Two DNA apply paths”):
+ * - Decorator: safe-desk uses @Agent({ dna: true }) → dna/safe-desk.dna.json on register
+ *   (projectRoot on AgentModule / runtime config). Pros: simple, no sync. Cons: no lock/registry.
+ * - Overlay: MeridianBootstrap → applyDnaOverlays after store/platform sync for the fleet.
+ *   Pros: versioned packages, env promote. Cons: sync steps; files alone do not update live agents.
+ *
  * Phase 6: optional SQL durable store, Flow HITL peer, RAG helpdesk.
  * Tool calls go through @hazeljs/agent-gatekeeper (authorizationGate).
  * Optional @hazeljs/agent-vm (AGENT_OS_AGENT_VM=1) for effect typing and rollback.
@@ -141,6 +148,8 @@ export function createAgentOsRuntimeConfig(): AgentRuntimeConfig {
     enableMetrics: true,
     enableRetry: true,
     enableCircuitBreaker: false,
+    /** Resolves `@Agent({ dna: true })` → `dna/{name}.dna.json` (e.g. safe-desk). */
+    projectRoot: process.cwd(),
     policyEngine,
     authorizationGate: gatekeeper.enabled ? gatekeeper.authorizationGate : undefined,
     governanceGate: new GovernanceGate(defaultAgentGovernance()),
@@ -207,6 +216,7 @@ export async function createStandaloneAgentOsWithOverlay(): Promise<AgentRuntime
 }
 
 AgentModule.forRoot({
+  projectRoot: process.cwd(),
   runtime: createAgentOsRuntimeConfig(),
 });
 

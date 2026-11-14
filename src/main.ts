@@ -36,6 +36,7 @@ async function bootstrap() {
 │  GET  /api/agent-vm/status   effect typing (AGENT_OS_AGENT_VM=1)   │
 │  GET  /__hazel               Inspector                             │
 │                                                                    │
+│  DNA: safe-desk=@Agent dna:true · fleet=store/platform overlay     │
 │  npm run store:sync | platform:sync | tour                         │
 └────────────────────────────────────────────────────────────────────┘
 `);

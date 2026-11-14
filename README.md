@@ -11,7 +11,8 @@ Not [Builder Methods Agent OS](https://hazeljs.ai/compare/builder-methods-agent-
 | Surface | Always on with `npm run dev` | Opt-in / separate |
 | --- | --- | --- |
 | Commerce agents + real `@Tool` handlers | Yes | — |
-| Gatekeeper (default deny) + DNA overlay | Yes | `AGENT_OS_GATEKEEPER=0` / `AGENT_OS_DNA_OVERLAY=0` |
+| Gatekeeper (default deny) + DNA overlay | Yes (fleet) | `AGENT_OS_GATEKEEPER=0` / `AGENT_OS_DNA_OVERLAY=0` |
+| Decorator DNA (`safe-desk`) | Yes — `@Agent({ dna: true })` | No sync; loads `dna/safe-desk.dna.json` on register |
 | Decision Runtime refunds | Yes (`/api/decision/*`) | — |
 | Autonomous Runtime (carrier switch) | Yes (`/api/autonomous/*`) | Offline: `npm run example:autonomous` |
 | RAG helpdesk (in-memory KB) | Yes (`POST /api/helpdesk/chat`) | — |
@@ -139,12 +140,12 @@ Full walkthrough: [TOUR.md](./TOUR.md).
 | --- | --- | --- |
 | `ops-router` | Default `POST /api/chat` | Delegates to the four specialists |
 | `support-desk` | Orders / tracking / refunds | `lookupOrder`, `trackShipment`, `processRefund` (approval) |
-| `safe-desk` | Read-only fallback / twin | `lookupOrder` only |
+| `safe-desk` | Read-only fallback / twin | `lookupOrder` only · **decorator DNA** (`dna: true`) |
 | `helpdesk` | Policy FAQ | RAG over `src/rag/helpdesk-kb.ts` + `listKbTopics` |
 | `api-concierge` | Ops over REST | Skills from Skillgate (`fromModule`), not hand-written `@Tool`s |
 | `fraud-triage` | Risk + freeze | `getRiskSignals`, `freezeAccount` (approval) |
 
-DNA packages: `dna/*.marketplace.json` — six marketplace packages after `store:sync`.
+DNA packages: `dna/*.marketplace.json` — six marketplace packages after `store:sync` (fleet overlay). **`safe-desk`** also loads via decorator DNA — see [Two DNA apply paths](#two-dna-apply-paths-keep-both).
 
 ---
 
@@ -240,70 +241,92 @@ Details: [examples/README.md](./examples/README.md) · post: [RAG vs CAG vs KAG]
 
 Meridian is a **normal TypeScript backend** (`npm run dev`). Chat, tools, HITL, Skillgate, and Decision all run inside that process.
 
-DNA and the platform control plane sit **beside** that runtime. They answer different questions:
+DNA is the **versioned desired config** for an agent (prompt, model, tool *names*, policies). **DNA ≠ tool implementations** — handlers stay in TypeScript (`@Tool` / Skillgate). This app demonstrates **two ways to apply** the same DNA format.
+
+### Two DNA apply paths (keep both)
+
+| | **Decorator DNA** | **Store + platform overlay** |
+| --- | --- | --- |
+| **How** | `@Agent({ dna: true })` → `{projectRoot}/dna/{name}.dna.json` on `registerAgentInstance` | `store:sync` → `platform:sync` → boot `applyDnaOverlays` |
+| **Live example** | **`safe-desk`** ([`src/agents/safe.agent.ts`](./src/agents/safe.agent.ts)) | **support-desk**, fraud, helpdesk, router, api-concierge |
+| **Best for** | One app, few agents, workshop DX, “edit JSON → restart” | Multi-env promote, lockfiles, audit of *desired* state |
+| **Advantages** | Zero sync scripts; opt-in per class; obvious wiring; fast feedback | Versioned packages; env pins `packageRef`; platform shows “what should run”; share via registry |
+| **Disadvantages** | No registry/lock; weak multi-env story; every agent needs `dna: true` + `projectRoot` | Extra steps (`store:sync` / `platform:sync`); DNA files alone do nothing until overlay; heavier mental model |
+| **Disable** | Omit `dna` on `@Agent` | `AGENT_OS_DNA_OVERLAY=0` (decorator metadata / decorator DNA still apply) |
+
+**Recommendation:** use **decorator DNA** as the default product DX; keep **store/platform** when you need Agent OS packaging and env promotion. Meridian teaches both in one codebase.
+
+```mermaid
+flowchart TD
+  subgraph decoratorPath [Decorator DNA]
+    Dec["@Agent dna true e.g. safe-desk"] --> Load["load dna/name.dna.json on register"]
+    Load --> RT
+  end
+  subgraph overlayPath [Store and platform]
+    Mkt["dna/*.marketplace.json"] -->|store:sync| Store["registry + .hazel/agents lock"]
+    YAML["platform/*.yaml"] -->|platform:sync| Plat[".hazel/platform/resources.json"]
+    Store --> Overlay
+    Plat --> Overlay["Boot applyDnaOverlays"]
+    Overlay --> RT
+  end
+  RT[AgentRuntime]
+  Code["@Tool / Skillgate"] --> RT
+  GK[Gatekeeper] --> RT
+  RT --> Chat["POST /api/*/chat"]
+```
+
+### Pieces and the questions they answer
 
 | Piece | Question it answers |
 | --- | --- |
 | **App code** (`@Agent` / `@Tool` / Skillgate) | What can this agent *do*? (orders DB, refunds, freezes) |
-| **DNA** (`dna/*.marketplace.json`) | Who is this agent *as a package*? (name, prompt, tool names, policies, version) |
+| **DNA file** (`dna/*.dna.json` / `*.marketplace.json`) | Who is this agent *as config*? (name, prompt, tool names, policies, version) |
+| **Decorator DNA** (`@Agent({ dna: true })`) | Should *this class* auto-load its DNA file on register? |
 | **Store** (`store:sync`) | How do we *version and share* that package? (registry + `.hazel/agents` lock) |
 | **Platform** (`platform:sync` / `hazel agent apply`) | What should *this environment* run? (Definitions / Deployments as desired state) |
+| **Boot overlay** | Apply store/platform DNA onto already-registered agents (prompt/model/policies only) |
 | **Runtime** (`POST /api/chat`) | What happens *right now*? (steps, HITL, timeline) |
-| **Gatekeeper** (`@hazeljs/agent-gatekeeper`) | May this agent call this tool *now*? (default deny, HITL, audit) |
-| **Decision** (`@hazeljs/decision`) | Which closed-set *judgment* before a side effect? |
-| **Decision Plane** (`createDecisionPlane`) | Which finite *advisory* answer (route / tier) — not authorization? |
-| **Governed runtime** (`createGovernedRuntime`) | How do external harnesses mediate tools via Gatekeeper? |
-| **Agent VM** (`@hazeljs/agent-vm`, opt-in) | What *effect class* is this tool? Can we speculate and undo? |
+| **Gatekeeper** | May this agent call this tool *now*? |
 
-**DNA ≠ implementation.** DNA lists tool *names* and policies; real side effects stay in TypeScript. Overlay never replaces `@Tool` handlers with empty stubs.
+**Platform ≠ deploy-your-Node-app.** `apply` writes desired state under `.hazel/platform/`. It does not start Meridian by itself.
 
-**Platform ≠ deploy-your-Node-app.** `apply` writes desired state under `.hazel/platform/`. It does not start or restart Meridian by itself. K8s (`runtimeClassName: kubernetes`) is optional and separate from the default local tour.
+### When each path is useful
 
-```mermaid
-flowchart TD
-  DNA["dna/*.marketplace.json"] -->|store:sync| Store["local registry + .hazel/agents + lock.json"]
-  YAML["platform/*.yaml<br/>nested DNA or packageRef"] -->|platform:sync| Plat[".hazel/platform/resources.json"]
-  Store --> Overlay
-  Plat --> Overlay[Boot overlay prompt / model / policies]
-  Overlay --> RT[AgentRuntime]
-  Code["@Tool / Skillgate / Decision"] --> RT
-  GK2[Gatekeeper] --> RT
-  RT --> Chat["POST /api/*/chat"]
-```
+**Decorator DNA (`safe-desk`)**  
+- Change fallback tone: edit `dna/safe-desk.dna.json`, restart — no sync.  
+- Teaching “DNA is a file the agent opts into.”
 
-### When this is useful
+**Store / platform (fleet)**  
+1. Change tone / policy without rewriting tools — bump `support-desk` DNA, sync, restart.  
+2. Promote the same package across staging/prod via `packageRef` + lock.  
+3. Ops audit — “what should this env run?” → `.hazel/platform/resources.json`.
 
-**1. Change tone / policy without rewriting tools**  
-Legal wants refunds to say “3–5 business days” and never invent tracking numbers. Bump DNA `systemPrompt`, keep `require_approval` on `processRefund`, sync store/platform, restart — same `@Tool` code, new governed prompt.
+**When to ignore DNA entirely:** new tools, Skillgate bugs, DemoLLM fixes — ship TypeScript.
 
-**2. Promote the same agent across envs**  
-Staging validated `@meridian/support-desk-agent@1.0.1`. Prod pins the same `packageRef` / lock, syncs, restarts. Store = what the agent is; platform = what this env wants; runtime = what executes.
+### Step-by-step
 
-**3. Ops / audit**  
-On-call asks “what config is this env supposed to run?” → `.hazel/platform/resources.json` / events. Chat logs show live behavior; platform shows **desired** state.
+**A. Decorator DNA (safe-desk)**  
+1. Edit [`dna/safe-desk.dna.json`](./dna/safe-desk.dna.json) (`systemPrompt`).  
+2. Restart `npm run dev` (or wait for respawn).  
+3. Fallback / twin chats pick up the new prompt. Keep `store:sync` DNA in [`scripts/dna-packages.ts`](./scripts/dna-packages.ts) in sync if you also publish packages.
 
-**When to ignore DNA/platform and just edit code:** new tools (`cancelOrder`), Skillgate route bugs, DemoLLM fixes — ship TypeScript and let `ts-node-dev` respawn.
-
-### Step-by-step: update a prompt and see it live
-
-1. Edit `dna/support-desk.marketplace.json` (`systemPrompt`) — or nested DNA in `platform/support.agents.yaml`.
-2. `npm run store:sync` — publish + materialize (needed for `packageRef` path).
-3. `npm run platform:sync` — apply Definitions/Deployments into `.hazel/platform/`.
-4. Restart `npm run dev` (or wait for respawn) — boot runs DNA overlay.
-5. Check the boot line `DNA overlay: support-desk@… ← platform/…` and chat again.
-
-Disable overlay with `AGENT_OS_DNA_OVERLAY=0` (decorator metadata only).
+**B. Store + platform overlay (e.g. support-desk)**  
+1. Edit `dna/support-desk.marketplace.json` (or nested DNA in `platform/*.yaml`).  
+2. `npm run store:sync` then `npm run platform:sync`.  
+3. Restart — boot line `DNA overlay: support-desk@…`.  
+4. Disable fleet overlay with `AGENT_OS_DNA_OVERLAY=0` (does not remove `safe-desk` decorator DNA).
 
 ### What changes the live app?
 
 | You change… | Live process updates when… |
 | --- | --- |
-| DNA prompt / policies | Restart (or explicit DNA reload) **with overlay on** |
+| `safe-desk` DNA file | Restart — decorator load on register |
+| Fleet DNA prompt / policies | Restart **with overlay on** after sync |
 | Platform YAML only | Sync + restart/overlay — apply alone is not enough |
 | `@Tool` / controllers | Code reload / restart — DNA does not implement tools |
 | `hazel agent apply` alone | **Nothing** in chat until the app overlays |
 
-`apply` / `store:sync` are **safe to run while the server is up**; they only update files. Meridian reads them on the next boot overlay.
+`apply` / `store:sync` are **safe while the server is up**; they only update files. Overlay reads them on the next boot.
 
 ---
 
